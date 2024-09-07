@@ -3,21 +3,23 @@
 ## Init program
 
 ### Open the input folder
-  - [ ] RAW images
-  - [ ] regular images
+  - [x] RAW images
+  - [x] regular images
 
 ## Preprocessing
-  - [ ] Convert RAW and JPEG to TIFF using `rawpy` and `imageio`
+  - [x] Convert RAW and JPEG to 16 bit
 
 ### Image alignment
-  - [ ] Use SURF to detect features in astronomical images
-  - [ ] Implement image alignment with geometric transformations (rotation, translation, scale) 
-  - [ ] RANSAC to eliminate outliers 
-  - [ ]`warpPerspective` from OpenCV to correctly align images
+  - [x] Use ORB to detect features in astronomical images
+  - [ ] Use SIFT alternatively to ORB
+  - [x] Implement image alignment with geometric transformations (rotation, translation, scale) 
+  - [x] RANSAC to eliminate outliers 
+  - [x]`warpPerspective` from OpenCV to correctly align images
 
-## Stacking
-  - [ ] Implement median stacking to reduce noise
-  - [ ] Integrate sigma clipping techniques for advanced noise management
+## Stacking (multiple algoritmhs)
+  - [x] Implement median stacking to reduce noise
+  - [x] Integrate sigma clipping techniques for advanced noise management
+  - [ ] Implement Weighted Average Stacking
 
 ## Denoising
   - [ ] Implement basic denoising using traditional filters like Gaussian Blur
