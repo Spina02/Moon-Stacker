@@ -1,5 +1,5 @@
-MAX_IMG = 20
-DEBUG = False
+MAX_IMG = 10
+DEBUG = True
 
 folder_path = './images/jpg'
 out_format = 'png'

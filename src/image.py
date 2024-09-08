@@ -41,7 +41,7 @@ def read_images(folder_path):
         if image.dtype != 'uint8':
             image = (image / 256).astype('uint8')
         images.append(image)
-        if DEBUG: progress(i + 1, len(image_paths), f'images read')
+        if DEBUG: progress(i, len(image_paths), f'images read')
         i += 1
 
     return images

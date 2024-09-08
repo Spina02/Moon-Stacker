@@ -1,22 +1,31 @@
 import cv2
-from matplotlib import scale
 import numpy as np
 from const import *
 from debug import progress
-from image import save_image
+import time
+import matplotlib.pyplot as plt
 
-# ORB algorithm
-def orb(image, n_features = 500):
+# ------------------ Enhancing -----------------
+def sharpen_image(image):
+    kernel = np.array([[0, -1, 0],
+                       [-1, 5,-1],
+                       [0, -1, 0]])
+    sharpened = cv2.filter2D(image, -1, kernel)
+    return sharpened
+
+def preprocess_images(images):
+    return [sharpen_image(image) for image in images]
+
+# ------------------ Aligning ------------------
+def orb(image, nfeatures = 500):
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # Initialize the ORB detector
-    orb = cv2.ORB_create(nfeatures = n_features, scaleFactor = 1.2, nlevels = 8, edgeThreshold = 31, firstLevel = 0, WTA_K = 2, scoreType = cv2.ORB_HARRIS_SCORE, patchSize = 31, fastThreshold = 20)
-    # Detect key points and descriptors
+    orb = cv2.ORB_create(nfeatures = nfeatures, scaleFactor = 1.2, nlevels = 8, edgeThreshold = 31, firstLevel = 0, WTA_K = 2, scoreType = cv2.ORB_HARRIS_SCORE, patchSize = 31, fastThreshold = 20)
     kp, des = orb.detectAndCompute(gray, None)
     # Draw the key points on the image
     return kp, des
 
-# SURF algorithm
 def surf(image, hessian_threshold = 400):
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -27,67 +36,69 @@ def surf(image, hessian_threshold = 400):
     # Draw the key points on the image
     return kp, des
 
-def sift(image):
+def sift(image, nfeatures = 500):
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # Initialize the SIFT detector
-    sift = cv2.SIFT_create()
+    sift = cv2.SIFT_create(nfeatures = nfeatures, sigma=1.6)
     # Detect key points and descriptors
     kp, des = sift.detectAndCompute(gray, None)
     # Draw the key points on the image
     return kp, des
 
-#align images using ORB
-def align_images(images, algo = 'orb', n_features = 500):
-    ref_image = images[0]
-    aligned_images = [ref_image]
-   
-    # Initialize the feature detector and descriptor extractor
+def align_image(image, ref_kp, ref_des, ref_image, algo, i, total, nfeatures):
+    
+    ref_kp_coords = [kp.pt for kp in ref_kp]
+    
     if algo == 'orb':
-        ref_kp, ref_des = orb(ref_image)
+        kp, des = orb(image)
         matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     elif algo == 'sift':
-        ref_kp, ref_des = sift(ref_image)
+        kp, des = sift(image)
         matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
     elif algo == 'surf':
-        ref_kp, ref_des = surf(ref_image)
+        kp, des = surf(image)
         matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
     
-    for image in images[1:]:
-        if algo == 'orb':
-            kp, des = orb(image)
-        elif algo == 'sift':
-            kp, des = sift(image)
-        elif algo == 'surf':
-            kp, des = surf(image)
+    # Ensure descriptors are not None
+    if des is None or ref_des is None:
+        progress(i+2, total, 'images aligned')
+        print(f'Image {i+2} has no descriptors')
+        return None
+    
+    # Match the descriptors
+    matches = matcher.match(ref_des, des)
+    matches = sorted(matches, key = lambda x:x.distance)
+    ref_pts = np.float32([ref_kp_coords[m.queryIdx] for m in matches]).reshape(-1, 1, 2)
+    img_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+    H, _ = cv2.findHomography(img_pts, ref_pts, cv2.RANSAC, 5.0)
 
-        # Ensure descriptors are not None
-        if des is None or ref_des is None:
-            continue
-        
-        # Match the descriptors
-        matches = matcher.match(ref_des, des)
+    aligned_img = cv2.warpPerspective(image, H, ref_image.shape[:2])
 
-        # Sort the matches based on distance
-        matches = sorted(matches, key = lambda x:x.distance)
+    progress(i+2, total, 'images aligned')
+    return aligned_img
 
-        # Extract location of good matches
-        ref_pts = np.float32([ref_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-        img_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+def align_images(images, algo='orb', nfeatures=500):
+    ref_image = images[0]
 
-        # Find the homography matrix
-        H, _ = cv2.findHomography(img_pts, ref_pts, cv2.RANSAC, 5.0)
+    if algo == 'orb':
+        ref_kp, ref_des = orb(ref_image, nfeatures)
+    elif algo == 'sift':
+        ref_kp, ref_des = sift(ref_image, nfeatures)
+    elif algo == 'surf':
+        ref_kp, ref_des = surf(ref_image)
 
-        # Use the homography matrix to align the images
-        height, width = ref_image.shape[:2]
-        aligned_img = cv2.warpPerspective(image, H, (width, height))
-        aligned_images.append(aligned_img)
 
-        if DEBUG: progress(len(aligned_images), len(images), 'images aligned')
+    start_time = time.time()
+    aligned_images = [align_image(image, ref_kp, ref_des, ref_image, algo, i, len(images), nfeatures) for i, image in enumerate(images[1:])]
+    end_time = time.time()
 
-    # Implement image alignment here
+    aligned_images = [ref_image] + [img for img in aligned_images if img is not None]
+    
+    print(f'Single process alignment took {end_time - start_time:.2f} seconds')
     return aligned_images
 
+# ------------------ Cropping ------------------
 def crop_to_center(images, margin=10):
     cropped_images = []
 
@@ -122,10 +133,11 @@ def crop_to_center(images, margin=10):
     end_y = min(start_y + size, first_image.shape[0])
 
     # Crop all images using the same parameters
-    for image in images[1:]:
+    for image in images:
         cropped_image = image[start_y:end_y, start_x:end_x]
         cropped_images.append(cropped_image)
 
-        if DEBUG: progress(len(cropped_images), len(images) -1, 'images cropped')
+        if DEBUG: progress(len(cropped_images), len(images), 'images cropped')
 
     return cropped_images
+
