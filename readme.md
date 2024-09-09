@@ -27,7 +27,11 @@ This is my thesis project, focused on stacking multiple RAW images of the moon t
 
 Below is a comparison between the original image and the image after stacking:
 
-![Original Image](./images/extra/original_original_0.png) ![Stacked Image](./images/extra/orb_400_weighted_average_snr.png)
+![Comparison Image](./images/extra/comparison.png) 
+
+Below a comparison between the same images, after some editing in Registax.
+
+![Comparison Edited Image](./images/extra/comparison_post.png)
 
 
 ## How to Use
