@@ -1,9 +1,7 @@
-#from numpy import average, save
 from image import *
 from preprocess import *
 from multiprocess import *
 from grid_search import grid_search
-
 
 def main():
     # TODO: add a way to select the output format

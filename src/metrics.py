@@ -1,7 +1,6 @@
-from const import DEBUG
+from const import *
 import numpy as np
 import cv2
-from skimage.measure import shannon_entropy
 
 def calculate_snr(image):
     signal = np.mean(image)
@@ -42,13 +41,6 @@ def calculate_sharpness(image):
 def calculate_variance(image):
     return np.var(image)
 
-def calculate_entropy(image):
-    if len(image.shape) == 2:
-        gray = image
-    else:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    return shannon_entropy(gray)
-
 # metric composite
 def normalize(value, min_value, max_value):
     return (value - min_value) / (max_value - min_value)
@@ -67,6 +59,5 @@ def image_analysis(image):
     print('Sharpness:', calculate_sharpness(image))
     print('Edge Sharpness:', edge_sharpness(image))
     print('Variance:', calculate_variance(image))
-    print('Entropy:', calculate_entropy(image))
 
     print('\nComposite Metric:', composite_metric(image))

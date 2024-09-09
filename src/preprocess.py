@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from const import *
 from debug import progress
-import torch
-from torch import nn
+#import torch
+#from torch import nn
 from models import *
 
 # ------------------ Enhancing -----------------

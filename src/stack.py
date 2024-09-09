@@ -35,8 +35,6 @@ def calculate_weights(images, method='snr'):
         weights = [calculate_sharpness(image) for image in images]
     elif method == 'variance':
         weights = [calculate_variance(image) for image in images]
-    elif method == 'entropy':
-        weights = [calculate_entropy(image) for image in images]
     elif method == 'edge_sharpness':
         weights = [edge_sharpness(image) for image in images]
     elif method == 'composite':

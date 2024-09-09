@@ -13,6 +13,6 @@
 
   - DnCnn model:
     - [GitHub](https://github.com/cszn/DnCNN)
-    - Paper: "Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising" by Kai Zhang et al.
+    - [Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising](http://ieeexplore.ieee.org/document/7839189/)
 
 ### Stacking
