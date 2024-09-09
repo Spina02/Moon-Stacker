@@ -1,10 +1,7 @@
-from email.mime import image
 import rawpy
 import imageio
 import os
-import numpy as np
 from debug import *
-
 from const import *
 
 def read_folder(folder_path):
@@ -54,9 +51,11 @@ def save_image(image, file_path, out_format='png'):
         file_path += f'.{out_format.lower()}'
     imageio.imsave(file_path, image, format=out_format)
 
-def save_images(images, folder_path, out_format='png'):
-    for f in os.listdir(folder_path):
-        os.remove(os.path.join(folder_path, f))
+def save_images(images, folder_path, out_format='png', name = None, clear = True):
+    print()
+    if clear:
+        for f in os.listdir(folder_path):
+            os.remove(os.path.join(folder_path, f))
     for i, image in enumerate(images):
-        save_image(image, f'{folder_path}/output_{i}', out_format)
+        save_image(image, f'{folder_path}/' + (f'output' if name is None else name) + f'_{i}', out_format)
         if DEBUG: progress(i + 1, len(images), f'images saved')

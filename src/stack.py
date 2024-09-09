@@ -37,21 +37,37 @@ def calculate_weights(images, method='snr'):
         weights = [calculate_variance(image) for image in images]
     elif method == 'entropy':
         weights = [calculate_entropy(image) for image in images]
+    elif method == 'edge_sharpness':
+        weights = [edge_sharpness(image) for image in images]
+    elif method == 'composite':
+        weights = [composite_metric(image) for image in images]
     else:
         raise ValueError("Unknown method for calculating weights")
     return weights
 
 def weighted_average_stack(images, method='snr'):
-    channels = cv2.split(images[0])
+    # Calculate the weights for each image
+    weights = calculate_weights(images, method)
+
+    # Set to zero the lowest 20% of the weights
+    weights = np.array(weights)
+    weights[np.argsort(weights)[:len(weights)//5]] = 0
+    weights = weights / np.sum(weights)
+
     stacked_channels = []
     for i in range(3):
+        # Extract the i-th channel from each image
         channel_stack = np.array([cv2.split(img)[i] for img in images])
-        weights = calculate_weights(channel_stack, method)
+
+        # Calculate the weighted sum of the channels
         weighted_sum = np.zeros_like(channel_stack[0], dtype=np.float64)
-        total_weight = np.sum(weights)
         for channel, weight in zip(channel_stack, weights):
             weighted_sum += channel * weight
-        stacked_channel = (weighted_sum / total_weight).astype(np.uint8)
+
+        # Normalize the weighted sum to 8-bit range
+        stacked_channel = (weighted_sum / np.sum(weights)).astype(np.uint8)
         stacked_channels.append(stacked_channel)
+
+    # Combine the channels into a single image
     stacked_image = cv2.merge(stacked_channels)
     return stacked_image
