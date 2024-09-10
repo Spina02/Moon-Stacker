@@ -1,6 +1,6 @@
 from image import *
 from preprocess import *
-from multiprocess import *
+from stack import *
 from grid_search import grid_search
 
 def main():
@@ -11,6 +11,18 @@ def main():
     
     # grid search
     grid_search()
+
+    """# read images
+    images = read_images('./images/jpg')
+    # preprocess images
+    save_images(images, './images/read')
+    preprocessed = preprocess_images(images)#, crop = False)
+    # save preprocessed images
+    save_images(preprocessed, './images/preprocessed')
+    # stack images
+    stacked_image = weighted_average_stack(preprocessed)
+    # save stacked image
+    save_image(stacked_image, './images/stacked/stacked')"""
      
 if __name__ == '__main__':
     import main

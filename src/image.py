@@ -1,8 +1,26 @@
 import rawpy
 import imageio
 import os
+from PIL import Image
 from debug import *
 from const import *
+import numpy as np
+
+def to_8bit(image):
+    if image.dtype == np.uint16:
+        image_8bit = (image / 256).astype(np.uint8)
+    else:
+        print(f'\nImage has dtype: {image.dtype}\n')
+        image_8bit = image
+    return image_8bit
+
+def to_16bit(image):
+    if image.dtype == np.uint8:
+        image_16bit = (image.astype(np.float32) * 256).astype(np.uint16)
+    else:
+        print(f'\nImage has dtype: {image.dtype}\n')
+        image_16bit = image
+    return image_16bit
 
 def read_folder(folder_path):
     image_paths = []
@@ -12,44 +30,45 @@ def read_folder(folder_path):
         i += 1
         if i > MAX_IMG:
             break
-        if not (folder_path.endswith('raw') and not f.endswith('.RAF')):
-            image_paths.append(os.path.join(folder_path, f))
+        #if not (folder_path.endswith('raw') and not f.endswith(('.raf', '.dng', '.nef', '.cr2'))):
+        image_paths.append(os.path.join(folder_path, f))
     return image_paths
 
-def read_raw_image(file_path):
-    with rawpy.imread(file_path) as raw:
-        rgb = raw.postprocess(use_camera_wb=True, output_bps=16)
-    return rgb
-
 def read_image(file_path):
-    return imageio.imread(file_path)
+    if file_path.lower().endswith(('.raf', '.dng', '.nef', '.cr2')):
+        with rawpy.imread(file_path) as raw:
+            # Extract the raw image data
+            raw_data = raw.raw_image_visible.astype(np.float32)
+            # Normalize the raw image data
+            raw_data /= np.max(raw_data)
+            # convert to rgb image using the camera white balance
+            image = raw.postprocess(use_camera_wb=True, no_auto_bright=True, output_bps=16)
+    else:
+        image = imageio.imread(file_path)
+        if image.dtype not in [np.uint8, np.uint16]:
+            print(f'\nImage {file_path} has an unsupported dtype: {image.dtype}\n')
+            exit(0)
+    return image
 
 def read_images(folder_path):
     image_paths = read_folder(folder_path)
     images = []
-    i = 1
     print("\n")
     for path in image_paths:
-        if path.lower().endswith(('.raf', '.dng', '.nef')):
-            image = read_raw_image(path)
-        else:
-            image = read_image(path)
-        # Normalize image data to 8-bit range if necessary
-        if image.dtype != 'uint8':
-            image = (image / 256).astype('uint8')
+        image = read_image(path)
         images.append(image)
-        if DEBUG: progress(i, len(image_paths), f'images read')
-        i += 1
+        if DEBUG: progress(len(images), len(image_paths), f'images read')
 
     return images
 
-def save_image(image, file_path, out_format='png'):
-    # Convert to 8-bit if the format is not TIFF
-    # if image.dtype != 'uint8':
-    #     image = (image / 256).astype('uint8')
+def save_image(image, file_path, out_format='jpeg'):
     if not file_path.endswith(f'.{out_format.lower()}'):
         file_path += f'.{out_format.lower()}'
-    imageio.imsave(file_path, image, format=out_format)
+
+    if image.dtype == np.uint16 and out_format.lower() not in ['tiff']:#, 'jpeg']:
+        image = to_8bit(image)
+
+    imageio.imsave(file_path, image)#, format=out_format)
 
 def save_images(images, folder_path, out_format='png', name = None, clear = True):
     print()

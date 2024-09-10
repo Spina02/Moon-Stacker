@@ -7,13 +7,13 @@ from const import *
 from metrics import *
 
 def median_stack(images):
-    channels = cv2.split(images[0])
-    stacked_channels = [np.median([cv2.split(img)[i] for img in images], axis=0).astype(np.uint8) for i in range(3)]
+    img_type = images[0].dtype
+    stacked_channels = [np.median([cv2.split(img)[i] for img in images], axis=0).astype(img_type) for i in range(3)]
     stacked_image = cv2.merge(stacked_channels)
     return stacked_image
 
 def sigma_clipping(images, sigma=3):
-    channels = cv2.split(images[0])
+    img_type = images[0].dtype
     stacked_channels = []
     for i in range(3):
         channel_stack = np.array([cv2.split(img)[i] for img in images])
@@ -21,7 +21,7 @@ def sigma_clipping(images, sigma=3):
         std = np.std(channel_stack, axis=0)
         mask = np.abs(channel_stack - mean) < sigma * std
         clipped_images = np.where(mask, channel_stack, mean)
-        stacked_channel = np.mean(clipped_images, axis=0).astype(np.uint8)
+        stacked_channel = np.mean(clipped_images, axis=0).astype(img_type)
         stacked_channels.append(stacked_channel)
     stacked_image = cv2.merge(stacked_channels)
     return stacked_image
@@ -44,6 +44,7 @@ def calculate_weights(images, method='snr'):
     return weights
 
 def weighted_average_stack(images, method='snr'):
+    img_type = images[0].dtype
     # Calculate the weights for each image
     weights = calculate_weights(images, method)
 
@@ -63,7 +64,7 @@ def weighted_average_stack(images, method='snr'):
             weighted_sum += channel * weight
 
         # Normalize the weighted sum to 8-bit range
-        stacked_channel = (weighted_sum / np.sum(weights)).astype(np.uint8)
+        stacked_channel = (weighted_sum / np.sum(weights)).astype(img_type)
         stacked_channels.append(stacked_channel)
 
     # Combine the channels into a single image
