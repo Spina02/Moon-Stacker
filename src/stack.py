@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from const import *
+from config import *
 from metrics import *
 
 def median_stack(images):

@@ -1,36 +1,27 @@
 import rawpy
 import imageio
 import os
-from PIL import Image
-from debug import *
-from const import *
+from utils import *
+import config
+from config import DEBUG, MAX_IMG
 import numpy as np
+import cv2
 
 def to_8bit(image):
-    if image.dtype == np.uint16:
-        image_8bit = (image / 256).astype(np.uint8)
-    else:
-        print(f'\nImage has dtype: {image.dtype}\n')
-        image_8bit = image
-    return image_8bit
+    return cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
+
 
 def to_16bit(image):
-    if image.dtype == np.uint8:
-        image_16bit = (image.astype(np.float32) * 256).astype(np.uint16)
-    else:
-        print(f'\nImage has dtype: {image.dtype}\n')
-        image_16bit = image
-    return image_16bit
+    return cv2.normalize(image, None, 0, 65535, cv2.NORM_MINMAX).astype('uint16')
 
 def read_folder(folder_path):
     image_paths = []
     i = 0
-    # Implement the function to read all image paths in the folder
+    # Read all image paths in the folder
     for f in os.listdir(folder_path):
         i += 1
         if i > MAX_IMG:
             break
-        #if not (folder_path.endswith('raw') and not f.endswith(('.raf', '.dng', '.nef', '.cr2'))):
         image_paths.append(os.path.join(folder_path, f))
     return image_paths
 
@@ -53,24 +44,23 @@ def read_image(file_path):
 def read_images(folder_path):
     image_paths = read_folder(folder_path)
     images = []
-    print("\n")
+    print()
     for path in image_paths:
-        image = read_image(path)
-        images.append(image)
+        images.append(read_image(path))
         if DEBUG: progress(len(images), len(image_paths), f'images read')
-
     return images
 
-def save_image(image, file_path, out_format='jpeg'):
+def save_image(image, file_path, out_format = config.output_format):
     if not file_path.endswith(f'.{out_format.lower()}'):
         file_path += f'.{out_format.lower()}'
 
     if image.dtype == np.uint16 and out_format.lower() not in ['tiff']:#, 'jpeg']:
+        if DEBUG > 1: print(f'\nCan not save in 16-bit, connverting to 8-bit')
         image = to_8bit(image)
 
-    imageio.imsave(file_path, image)#, format=out_format)
+    imageio.imsave(file_path, image)
 
-def save_images(images, folder_path, out_format='png', name = None, clear = True):
+def save_images(images, folder_path, out_format = config.output_format, name = None, clear = True):
     print()
     if clear:
         for f in os.listdir(folder_path):

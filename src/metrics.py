@@ -1,4 +1,4 @@
-from const import *
+from config import *
 import numpy as np
 import cv2
 
@@ -23,13 +23,6 @@ def calculate_sharpness(image):
     laplacian = cv2.Laplacian(gray, cv2.CV_64F)
     return laplacian.var() 
 
-def edge_sharpness(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
-    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
-    sobel = np.hypot(sobelx, sobely)
-    return np.mean(sobel)
-
 def calculate_sharpness(image):
     if len(image.shape) == 2:
         gray = image
@@ -43,21 +36,21 @@ def calculate_variance(image):
 
 # metric composite
 def normalize(value, min_value, max_value):
-    return (value - min_value) / (max_value - min_value)
+    # Normalize the value to [0, 10]
+    return (value - min_value) / (max_value - min_value) *10
 
 def composite_metric(image):
+    type_factor = 1 if image.dtype == np.uint8 else 255
     snr = normalize(calculate_snr(image), 0, 10)
-    contrast = normalize(calculate_contrast(image), 0, 255/2)
-    sharpness = normalize(calculate_sharpness(image), 0, 100000)
-    edge_sharp = normalize(edge_sharpness(image), 0, 1000)
+    contrast = normalize(calculate_contrast(image), 0, 255*type_factor/2)
+    sharpness = normalize(calculate_sharpness(image), 0, 100*type_factor)
     
-    return (3 * snr + 2 * sharpness + 2 * edge_sharp + contrast) / 9
+    return (2 * snr + 2 * sharpness + contrast) / 5
 
 def image_analysis(image):
-    print('SNR:', calculate_snr(image))
-    print('Contrast:', calculate_contrast(image))
-    print('Sharpness:', calculate_sharpness(image))
-    print('Edge Sharpness:', edge_sharpness(image))
-    print('Variance:', calculate_variance(image))
+    type_factor = 1 if image.dtype == np.uint8 else 255
+    print('SNR:', normalize(calculate_snr(image), 0, 10))
+    print('Contrast:', normalize(calculate_contrast(image), 0, 255*type_factor/2))
+    print('Sharpness:', normalize(calculate_sharpness(image), 0, 100*type_factor))
 
     print('\nComposite Metric:', composite_metric(image))

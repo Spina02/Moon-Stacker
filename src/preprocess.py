@@ -1,8 +1,9 @@
 from weakref import ref
 import cv2
 import numpy as np
-from const import *
-from debug import progress
+from config import DEBUG
+import config
+from utils import progress
 #import torch
 #from torch import nn
 from image import to_8bit
@@ -69,25 +70,32 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
         return None
     
     # Match the descriptors
-    matches = matcher.knnMatch(ref_des, des, k = 1)
+    if config.IS_MOON:
+        matches = matcher.knnMatch(ref_des, des, k = 2)
+        good_matches = [m for m, n in matches if m.distance < 0.5 * n.distance]
+    else:
+        matches = matcher.knnMatch(ref_des, des, k = 1)
+        good_matches = [m[0] for m in matches if len(m) == 1]
+        #good_matches = [m for m in matches if m.distance < 50]
 
-    matches = [m[0] for m in matches if len(m) == 1]
-
-    if len(matches) < 4:
-        print(f'\nNot enaugh matches found: {len(matches)} matches\n')
+    if len(good_matches) < 4:
+        print(f'\nNot enaugh matches found: {len(good_matches)} matches\n')
         return None
+    else :
+        if DEBUG > 1: print(f'\n{len(good_matches)} matches found\n')
 
     # Compute the homography
-    ref_pts = np.float32([ref_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-    img_pts = np.float32([kp[m.trainIdx].pt     for m in matches]).reshape(-1, 1, 2)
-    H, _ = cv2.findHomography(img_pts, ref_pts, cv2.RANSAC, 10.0)
+    ref_pts = np.float32([ref_kp[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+    img_pts = np.float32([kp[m.trainIdx].pt     for m in good_matches]).reshape(-1, 1, 2)
+    H, _ = cv2.findHomography(img_pts, ref_pts, cv2.RANSAC, 15.0)
 
     if H is None or H.shape != (3, 3):
         print(f'\nImage could not find a valid homography\n')
         return None
 
     # Warp the original image (16 bit)
-    aligned_img = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]))
+    aligned_img = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_LANCZOS4)
+
 
     return aligned_img
 
@@ -96,14 +104,20 @@ def align_images(images, algo='orb', nfeatures=500):
 
     if algo == 'orb':
         ref_kp, ref_des, aligner = orb(to_8bit(ref_image), nfeatures = nfeatures)
-        matcher = cv2.BFMatcher.create(cv2.NORM_HAMMING, crossCheck=True)
+        norm = cv2.NORM_HAMMING
+
     elif algo == 'sift':
         ref_kp, ref_des, aligner = sift(to_8bit(ref_image), nfeatures = nfeatures)
-        matcher = cv2.BFMatcher.create(cv2.NORM_L2, crossCheck=True)
-
+        norm = cv2.NORM_L2
+        
     elif algo == 'surf':
         ref_kp, ref_des, aligner = surf(to_8bit(ref_image))
-        matcher = cv2.BFMatcher.create(cv2.NORM_L2, crossCheck=True)
+        norm = cv2.NORM_L2
+
+    if config.IS_MOON:
+        matcher = cv2.BFMatcher.create(norm)
+    else:
+        matcher = cv2.BFMatcher.create(norm, crossCheck=True)
 
     aligned_images = [ref_image]
 
@@ -111,7 +125,7 @@ def align_images(images, algo='orb', nfeatures=500):
         aligned_image = align_image(image, ref_kp, ref_des, ref_image, aligner, matcher)
         if aligned_image is not None:
             aligned_images.append(aligned_image)
-        progress(len(aligned_images), len(images), 'images aligned')
+        if DEBUG: progress(len(aligned_images), len(images), 'images aligned')
 
     return aligned_images
 
@@ -170,7 +184,7 @@ def preprocess_images(images, algo='orb', nfeatures=500, margin = 10, sharpen = 
     imgs = images.copy()
     if align:
         # Apply Gaussian blur to the images
-        imgs = [cv2.GaussianBlur(image, (5, 5), 0) for image in imgs]
+        #imgs = [cv2.GaussianBlur(image, (5, 5), 0) for image in imgs]
     
         # Denoise the images using DnCNN model
         #blurred_images = [denoise_image(image) for image in images]

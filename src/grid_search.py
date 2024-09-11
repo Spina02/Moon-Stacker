@@ -1,64 +1,65 @@
-from kiwisolver import strength
-from sympy import N
-from metrics import *
+from metrics import image_analysis
 from stack import *
 from preprocess import *
 from image import *
-from const import DEBUG, folder_path
-import os
+import config
 
 # lists of algs
-#align_algs = ['sift', 'surf', 'orb']
-align_algs = ['orb']
+align_algs = ['sift', 'surf', 'orb']
 stacking_algs = ['median', 'sigma_clipping', 'weighted_average']
-#stacking_algs = ['weighted_average']
-average_algs = ['snr', 'composite']
-sharpening_algs = ['unsharp_mask', 'sharpen']
-n_features = [100, 300, 500]
+average_algs = ['snr']#, 'composite']
+n_features = [1000]
 sigmas = [1.5]
 strengths = [2]
 
-def save_and_analyze_image(image, align_alg, nfeatures, stacking_alg, average_alg=None):
+params = {
+    'align_alg':    ['sift',    'surf',             'orb'],
+    'stacking_alg': ['median',  'sigma_clipping',   'weighted_average'],
+    'average_alg':  ['snr',     'composite'],
+    'n_features':   [1000,      1500],
+    'sigma':        [1,         2],
+    'strength':     [2,         3]
+}
+
+def save_and_analyze_image(image, filepath):
     print()
-    #if average_alg:
-    filename = f'./images/output/{align_alg}_{stacking_alg}_{nfeatures}'
-    filename += f'_{average_alg}' if average_alg else ''
-    save_image(image, filename)
-    image_analysis(image)
+    save_image(image, filepath)
+    if DEBUG: image_analysis(image)
     print('-------------------------------------')
 
-def grid_search():
+def grid_search(crop = True):
     # Clear the output folder
-    for f in os.listdir('./images/output'):
-        os.remove(os.path.join('./images/output', f))
+    clear_folder(config.output_folder)
+    clear_folder('./images/preprocessed')
 
     print("\n starting grid search")
 
-    images = read_images(folder_path)
+    # Read the images from the input folder
+    print(f"reading images from {config.input_folder}")
+    images = read_images(config.input_folder)
     
-    image_0 = preprocess_images(images[:1], align = False, sharpen = False)[0]
-
-    save_and_analyze_image(image_0, 'original', 0, 'original')
-
+    original = preprocess_images(images[:1], align = False, sharpen = False, crop = crop)[0]
+    print("saving original image")
+    save_and_analyze_image(original, f'{config.output_folder}/original')
 
     for align_alg in align_algs:
         for nfeatures in n_features:
             for sigma in sigmas:
                 for strength in strengths:
-                    print(f'Start aligning using {align_alg} ({nfeatures} features)')
-                    preprocessed = preprocess_images(images, nfeatures=nfeatures, align=align_alg, sigma = sigma, strength = strength)
+                    if DEBUG: print(f'Start aligning using {align_alg} ({nfeatures} features)')
+                    preprocessed = preprocess_images(images, nfeatures=nfeatures, align=align_alg, sigma = sigma, strength = strength, crop = crop)
                     save_images(preprocessed, './images/preprocessed', name = f'{align_alg}_{nfeatures}_si{sigma}_st{strength}', clear = False)
                     for stacking_alg in stacking_algs:
                         if stacking_alg == 'weighted_average':
                             for average_alg in average_algs:
-                                print(f'Aligning: {align_alg}, Stacking: {stacking_alg}, Average: {average_alg}')
+                                filepath = f'{config.output_folder}/{align_alg}_{stacking_alg}_{nfeatures}_{average_alg}'
+                                if DEBUG: print(f'Aligning: {align_alg}, Stacking: {stacking_alg}, Average: {average_alg}')
                                 image = weighted_average_stack(preprocessed, method=average_alg)
-                                save_and_analyze_image(image, align_alg, stacking_alg, nfeatures, average_alg)
-                        elif stacking_alg == 'median':
-                            print(f'Aligning: {align_alg}, Stacking: {stacking_alg}')
+                                save_and_analyze_image(image, filepath)
+                                if COLAB: visualize_image(image, filepath)
+                        else:
+                            filepath = f'{config.output_folder}/{align_alg}_{stacking_alg}_{nfeatures}'
+                            if DEBUG: print(f'Aligning: {align_alg}, Stacking: {stacking_alg}')
                             image = median_stack(preprocessed)
-                            save_and_analyze_image(image, align_alg, nfeatures, stacking_alg)
-                        elif stacking_alg == 'sigma_clipping':
-                            print(f'Aligning: {align_alg}, Stacking: {stacking_alg}')
-                            image = sigma_clipping(preprocessed)
-                            save_and_analyze_image(image, align_alg, nfeatures, stacking_alg)
+                            save_and_analyze_image(image, filepath)
+                            if COLAB: visualize_image(image, filepath)
