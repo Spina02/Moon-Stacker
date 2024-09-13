@@ -5,18 +5,18 @@ from image import *
 import config
 
 # lists of algs
-align_algs = ['sift', 'surf', 'orb']
+align_algs = ['orb', 'sift', 'surf']
 stacking_algs = ['median', 'sigma_clipping', 'weighted_average']
 average_algs = ['snr']#, 'composite']
-n_features = [1000]
-sigmas = [1.5]
-strengths = [2]
+n_features = [5000]#, 5000]
+sigmas = [2, 1.5]
+strengths = [3]
 
 params = {
     'align_alg':    ['sift',    'surf',             'orb'],
     'stacking_alg': ['median',  'sigma_clipping',   'weighted_average'],
     'average_alg':  ['snr',     'composite'],
-    'n_features':   [1000,      1500],
+    'n_features':   [1000,      2000,               5000],
     'sigma':        [1,         2],
     'strength':     [2,         3]
 }
@@ -32,13 +32,12 @@ def grid_search(crop = True):
     clear_folder(config.output_folder)
     clear_folder('./images/preprocessed')
 
-    print("\n starting grid search")
+    print("\n starting grid search\n")
 
     # Read the images from the input folder
-    print(f"reading images from {config.input_folder}")
     images = read_images(config.input_folder)
     
-    original = preprocess_images(images[:1], align = False, sharpen = False, crop = crop)[0]
+    original = preprocess_images(images[:1], align = False, sharpen = False, crop = crop, denoise = False)[0]
     print("saving original image")
     save_and_analyze_image(original, f'{config.output_folder}/original')
 
@@ -57,9 +56,15 @@ def grid_search(crop = True):
                                 image = weighted_average_stack(preprocessed, method=average_alg)
                                 save_and_analyze_image(image, filepath)
                                 if COLAB: visualize_image(image, filepath)
-                        else:
+                        elif stacking_alg == 'median':
                             filepath = f'{config.output_folder}/{align_alg}_{stacking_alg}_{nfeatures}'
                             if DEBUG: print(f'Aligning: {align_alg}, Stacking: {stacking_alg}')
                             image = median_stack(preprocessed)
+                            save_and_analyze_image(image, filepath)
+                            if COLAB: visualize_image(image, filepath)
+                        elif stacking_alg == 'sigma_clipping':
+                            filepath = f'{config.output_folder}/{align_alg}_{stacking_alg}_{nfeatures}'
+                            if DEBUG: print(f'Aligning: {align_alg}, Stacking: {stacking_alg}')
+                            image = sigma_clipping(preprocessed)
                             save_and_analyze_image(image, filepath)
                             if COLAB: visualize_image(image, filepath)

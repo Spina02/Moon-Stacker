@@ -6,10 +6,20 @@ import matplotlib.pyplot as plt
 from config import *
 from metrics import *
 
+
 def median_stack(images):
+    # Verifica il numero di canali della prima immagine
+    num_channels = 1 if len(images[0].shape) == 2 else images[0].shape[2]
     img_type = images[0].dtype
-    stacked_channels = [np.median([cv2.split(img)[i] for img in images], axis=0).astype(img_type) for i in range(3)]
-    stacked_image = cv2.merge(stacked_channels)
+
+    if num_channels == 1:
+        # Immagini in scala di grigi
+        stacked_image = np.median(images, axis=0).astype(img_type)
+    else:
+        # Immagini a colori
+        stacked_channels = [np.median([cv2.split(img)[i] for img in images], axis=0).astype(img_type) for i in range(num_channels)]
+        stacked_image = cv2.merge(stacked_channels)
+    
     return stacked_image
 
 def sigma_clipping(images, sigma=3):
