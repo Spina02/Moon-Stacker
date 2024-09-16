@@ -41,43 +41,27 @@ def image_stacking_2(images, features_alg = 'orb', average_alg = 'composite', st
     print()
 
     preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False)
-    for strength in [5, 7, 10]:
-        print(f"unsharping with strength: {strength}")
-        unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = True, unsharp = True, strength = strength, calibrate = False)
+    for stacking_alg in ['median', 'sigma clipping', 'weighted average']:
+        for strength in [10, 15, 20]:
+            print(f"unsharping with strength: {strength}")
+            unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = True, unsharp = True, strength = strength, calibrate = False)
 
-        # Stack the images
-        if stacking_alg == 'weighted average':
-            image = weighted_average_stack(unsharped, method=average_alg)
-        elif stacking_alg == 'median':
-            image = median_stack(unsharped)
-        elif stacking_alg == 'sigma clipping':
-            image = sigma_clipping(unsharped)
+            # Stack the images
+            if stacking_alg == 'weighted average':
+                image = weighted_average_stack(unsharped, method=average_alg)
+            elif stacking_alg == 'median':
+                image = median_stack(unsharped)
+            elif stacking_alg == 'sigma clipping':
+                image = sigma_clipping(unsharped)
 
-        # Save the image
-        path = config.output_folder + f'/{features_alg}_{strength}_{stacking_alg}' 
-        path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
-        print(f'\nsaving {path}')
-        save_image(image, path)
-
-def canny_images(images, low_threshold=150, high_threshold=255):
-    for i, image in enumerate(images):
-        # Convert to grayscale if the image is RGB
-        if len(image.shape) == 3:
-            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        else:
-            gray_image = image
-        
-        # Apply Canny edge detection
-        edges = cv2.Canny(to_8bit(gray_image), low_threshold, high_threshold)
-        
-        # Save the resulting image
-        save_image(edges, f'./images/edge/canny_{i}')
-        return edges
+            # Save the image
+            path = config.output_folder + f'/{features_alg}_{strength}_{stacking_alg}' 
+            path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
+            print(f'\nsaving {path}')
+            save_image(image, path)
 
 def main():
-
-    image_stacking_2(read_images(config.input_folder), stacking_alg = 'sigma clipping')
-    image_stacking_2(read_images(config.input_folder), stacking_alg = 'weighted average')
+    image_stacking_2(read_images(config.input_folder), stacking_alg = 'median')
 
 
 if __name__ == '__main__':
