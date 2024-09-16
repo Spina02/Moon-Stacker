@@ -41,7 +41,7 @@ def image_stacking_2(images, features_alg = 'orb', average_alg = 'composite', st
     print()
 
     preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False)
-    for strength in [1, 2, 3, 4, 5]:
+    for strength in [5, 7, 10]:
         print(f"unsharping with strength: {strength}")
         unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = True, unsharp = True, strength = strength, calibrate = False)
 
@@ -52,12 +52,6 @@ def image_stacking_2(images, features_alg = 'orb', average_alg = 'composite', st
             image = median_stack(unsharped)
         elif stacking_alg == 'sigma clipping':
             image = sigma_clipping(unsharped)
-
-        # denoise the image
-        #if denoise:
-        #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        #model = model_init()
-        #image = perform_denoising(model10, image, device)
 
         # Save the image
         path = config.output_folder + f'/{features_alg}_{strength}_{stacking_alg}' 
@@ -81,14 +75,10 @@ def canny_images(images, low_threshold=150, high_threshold=255):
         return edges
 
 def main():
-    #config_init()
-    #images = read_images(config.input_folder)
 
-    #image_stacking(images, denoise = False, features_alg = 'orb', stacking_alg = 'median', grayscale = True)
-    #image_stacking(images, denoise = False, features_alg = 'orb', stacking_alg = 'sigma clipping', grayscale = True)
-    #image_stacking(images, denoise = False, features_alg = 'orb', stacking_alg = 'weighted average', average_alg = 'composite', grayscale = True)
+    image_stacking_2(read_images(config.input_folder), stacking_alg = 'sigma clipping')
+    image_stacking_2(read_images(config.input_folder), stacking_alg = 'weighted average')
 
-    image_stacking_2(read_images(config.input_folder))
 
 if __name__ == '__main__':
     main()

@@ -1,8 +1,8 @@
-MAX_IMG = 2
+MAX_IMG = 50
 COLAB = False
 DEBUG = 1 # 0: no debug, 1: print debug, 2: very verbose debug
 IS_MOON = True
-DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-15/net.pth'
+DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-25/net.pth'
 
 input_folder = './images/lights'
 bias_folder = './images/bias'

@@ -255,7 +255,7 @@ def preprocess_images(images,           align       = True,
     #save_images(imgs, "./images/calibrated", name = 'calibrated')
 
 
-    #contrast_imgs = [adjust_brightness_contrast(image, brightness=0, contrast=0) for image in imgs]
+    contrast_imgs = [adjust_brightness_contrast(image, brightness=0, contrast=10) for image in imgs]
     #gamma_imgs    = [adjust_gamma(image, gamma=0.7) for image in contrast_imgs]
 
     #imgs = gamma_imgs

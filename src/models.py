@@ -7,6 +7,7 @@ import cv2
 import gc
 from utils import progress
 from skimage import color
+from config import DNCNN_MODEL_PATH
 
 class DnCNN(nn.Module):
     def __init__(self, channels, num_of_layers=17):
@@ -28,7 +29,7 @@ class DnCNN(nn.Module):
         with torch.no_grad():
             return x - self.dncnn(x)
 
-def model_init(model_path = './models/DnCNN-PyTorch/logs/DnCNN-S-25/net.pth'):
+def model_init(model_path = DNCNN_MODEL_PATH):
     model = DnCNN(channels=1, num_of_layers=17)
     state_dict = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
     
@@ -173,29 +174,22 @@ def unsharp_mask(images, model, strength):
     sobel_masks = sobel_images(images)
 
     merged_images = []
-    i = 0
+
     for image, blurred_image, sobel_mask in zip(images, blurred_images, sobel_masks):
         image = image.astype(np.float32)
 
         # Adjust the strength based on the Sobel mask
         sharp_component = cv2.multiply(image, 1 + strength * sobel_mask)
         sharp_component = normalize(sharp_component)
-        
         blurred_component = cv2.multiply(blurred_image, 1 - strength * sobel_mask)
         blurred_component = normalize(blurred_component)
-
         # manage too sharpened pixels
         sharp_component = np.clip(sharp_component, 0, 1)
         blurred_component = np.clip(blurred_component, 0, 1)
 
-
-        if i == 0:
-            # normalize 0-255
-            save_image(to_8bit(sharp_component), './images/sharpened/sharp')
-            save_image(to_8bit(blurred_component), './images/blurred/blur')
-            i += 1
-
-        merged_image = to_16bit(np.clip(cv2.add(sharp_component, blurred_component, 0, 1)))
+        # Merge the components
+        merged_image = cv2.add(sharp_component, blurred_component)
+        merged_image = to_16bit(merged_image)
         merged_images.append(merged_image)
 
     del blurred_images, sobel_masks, sharp_component, blurred_component
