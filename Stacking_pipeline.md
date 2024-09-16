@@ -10,9 +10,10 @@ Blink - deep sky stacker -> selezione le foto
 
 batch preprocessing
 
-	*bias* - foto a tappo del sensore chiuso, iso = lights, t. esposizione minimo della camera, f indifferente
+	*bias*
+		foto a tappo del sensore chiuso, iso = lights, t. esposizione minimo della camera, f indifferente
 
-	*dark* - correggono hot pixels ed errori del sensore, tappo del sensore chiuso, t. esposizione = lights
+		*dark* - correggono hot pixels ed errori del sensore, tappo del sensore chiuso, t. esposizione = lights
 
 	flat 
 		rimuove rumore ed effetto vignettato
