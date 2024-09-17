@@ -8,7 +8,7 @@ import torchvision.utils as utils
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
-from models import DnCNN
+from denoise import DnCNN
 from dataset import prepare_data, Dataset
 from utils import *
 

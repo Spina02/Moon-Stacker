@@ -1,20 +1,21 @@
 import config
 from image import *
-from preprocess import preprocess_images
-from stack import *
-import torch
-from models import model_init, perform_denoising, unsharp_mask
+from preprocessing import preprocess_images
+from stacking import *
+#from denoise import model_init, perform_denoising
+from metrics import calculate_psnr
 
-
-def image_stacking(images = None, features_alg = 'orb', stacking_alg = 'median', average_alg = None, n_features = 10000, denoise = False, denoise_alg = 'DnCnn', grayscale = True, crop = True, unsharp = True):
+def image_stacking(images = None, features_alg = 'orb', stacking_alg = 'median', average_alg = None, n_features = 10000, grayscale = True, crop = True, unsharp = True):
 
     print()
     if not images:
       # Read the images from the input folder
       images = read_images(config.input_folder)
 
+    image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False,crop = True, grayscale = grayscale, unsharp = False)[0]
+    save_image(image_0, config.output_folder + '/original')
     # Preprocess the images
-    preprocessed = preprocess_images(images, nfeatures=n_features, align=features_alg, crop = crop, grayscale = grayscale, unsharp = unsharp)
+    preprocessed = preprocess_images(images, nfeatures=n_features, align=True, algo = features_alg, crop = crop, grayscale = grayscale, unsharp = unsharp)
 
     # Stack the images
     if stacking_alg == 'weighted average':
@@ -24,16 +25,12 @@ def image_stacking(images = None, features_alg = 'orb', stacking_alg = 'median',
     elif stacking_alg == 'sigma clipping':
         image = sigma_clipping(preprocessed)
 
-    # denoise the image
-    #if denoise:
-    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    #model = model_init()
-    #image = perform_denoising(model, image, device)
-
     # Save the image
     path = config.output_folder + f'/{features_alg}_{stacking_alg}_{n_features}' 
     path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
     save_image(image, path)
+    psnr = calculate_psnr(image_0, image)
+    print(f'PSNR: {psnr}')
     
     return image
 

@@ -1,5 +1,5 @@
 from image import *
-from preprocess import align_images
+from preprocessing import align_images
 import cv2
 import numpy as np
 

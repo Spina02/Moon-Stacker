@@ -1,22 +1,13 @@
 import cv2
 import numpy as np
-from config import DEBUG
-import config
-from utils import progress
-from image import to_8bit
-from models import model_init, unsharp_mask, dncnn_images
-from image import save_images
 import gc
-from calibration import calibrate_images
+from image import to_8bit
+import config
+from config import DEBUG
+from utils import progress
 
-# ------------------ Enhancing -----------------
-def sharpen_image(image):
-    kernel = np.array([[0, -1, 0],
-                       [-1, 5,-1],
-                       [0, -1, 0]])
-    return cv2.filter2D(image, -1, kernel)
+# --------------- Feature Detection ---------------
 
-# ------------------ Aligning ------------------
 def orb(image, nfeatures = 500):
     # Convert the image to grayscale
     if len(image.shape) == 3:
@@ -64,24 +55,7 @@ def sift(image, nfeatures = 500):
 
     return kp, des, sift
 
-def equalize_histogram(image):
-    if len(image.shape) == 2:  # Grayscale image
-        return cv2.equalizeHist(image)
-    else:  # Color image
-
-        ycrcb = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
-        ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
-        return cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2RGB)
-
-def denoise_images(images, algo):
-    if algo == 'gaussian':
-        # Apply Gaussian blur to the image
-        return [cv2.GaussianBlur(image, (5, 5), 0) for image in images]
-    if algo == 'NLMeans':
-        # Apply fast non-local means denoising to the image
-        return [cv2.fastNlMeansDenoisingColored(image, None, 5, 5, 7, 21) for image in images]
-    if algo == 'DnCnn':
-        return dncnn_images(model_init(), images)
+# -------------------- Aligning --------------------
 
 def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
     # find the keypoints and descriptors with the chosen algorithm
@@ -181,96 +155,3 @@ def align_images(images, algo='orb', nfeatures=500):
         if DEBUG: progress(len(aligned_images), len(images), 'images aligned')
 
     return aligned_images
-
-# ------------------ Cropping ------------------
-def crop_to_center(images, margin=10):
-    cropped_images = []
-
-    # Process the first image to get the cropping parameters
-    first_image = to_8bit(images[0])
-    if len(first_image.shape) == 3:
-        gray = cv2.cvtColor(first_image, cv2.COLOR_RGB2GRAY)
-    else:
-        gray = first_image
-
-    # Apply Gaussian blur to reduce noise
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    # Binary thresholding
-    _, thresh = cv2.threshold(blurred, 50, 255, cv2.THRESH_BINARY)
-
-    # Find contours
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    contour = max(contours, key=cv2.contourArea)
-
-    # Get the bounding rectangle of the selected contour
-    x, y, w, h = cv2.boundingRect(contour)
-
-    # Calculate the center of the bounding rectangle
-    center_x, center_y = x + w // 2, y + h // 2
-
-    # Determine the size of the square
-    size = max(w, h) + 2 * margin
-
-    # Calculate the top-left corner of the square
-    start_x = max(center_x - size // 2, 0)
-    start_y = max(center_y - size // 2, 0)
-
-    # Ensure the square fits within the image boundaries
-    end_x = min(start_x + size, first_image.shape[1])
-    end_y = min(start_y + size, first_image.shape[0])
-
-    # Crop all images using the same parameters
-    for image in images:
-        cropped_image = image[start_y:end_y, start_x:end_x]
-        cropped_images.append(cropped_image)
-
-        if DEBUG: progress(len(cropped_images), len(images), 'images cropped')
-
-    return cropped_images
-
-def adjust_gamma(image, gamma=1.0):
-    inv_gamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-    return cv2.LUT(image, table)
-
-def adjust_brightness_contrast(image, brightness=0, contrast=0):
-    beta = brightness
-    alpha = contrast / 127 + 1  # Alpha è il fattore di contrasto
-    adjusted = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
-    return adjusted
-
-# --------------- Preprocessing ----------------
-def preprocess_images(images,           align       = True,
-                      algo    = 'orb',  nfeatures   = 10000,
-                      crop    = True,   margin      = 10,
-                      unsharp = True,   strength    = 0.9,
-                      grayscale   = True, calibrate = True):
-    if calibrate:
-        imgs = calibrate_images(images)
-    else:
-        imgs = images.copy()
-
-    #save_images(imgs, "./images/calibrated", name = 'calibrated')
-
-
-    imgs = [adjust_brightness_contrast(image, brightness=0, contrast=10) for image in imgs]
-    #gamma_imgs    = [adjust_gamma(image, gamma=0.7) for image in contrast_imgs]
-
-    if align:
-        # Align the images
-        imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
-
-    if crop:
-        # Crop the images to the center
-        imgs = crop_to_center(imgs, margin=margin)
-
-    if unsharp:
-        # Apply unsharp mask to the images
-        imgs = unsharp_mask(imgs, model_init(), strength)
-
-    if grayscale:
-        imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
-
-    return imgs

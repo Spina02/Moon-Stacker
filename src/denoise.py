@@ -10,11 +10,9 @@ from skimage import color
 from config import DNCNN_MODEL_PATH
 
 class DnCNN(nn.Module):
-    def __init__(self, channels, num_of_layers=17):
+    def __init__(self, channels, num_of_layers=17, kernel_size=3, features=64):
         super(DnCNN, self).__init__()
-        kernel_size = 3
         padding = 1
-        features = 64
         layers = []
         layers.append(nn.Conv2d(in_channels=channels, out_channels=features, kernel_size=kernel_size, padding=padding, bias=False))
         layers.append(nn.ReLU(inplace=True))
@@ -30,7 +28,7 @@ class DnCNN(nn.Module):
             return x - self.dncnn(x)
 
 def model_init(model_path = DNCNN_MODEL_PATH):
-    model = DnCNN(channels=1, num_of_layers=17)
+    model = DnCNN(channels=1, num_of_layers=17, kernel_size=3, features=64)
     state_dict = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
     
     new_state_dict = {}
@@ -65,7 +63,6 @@ def preprocess_image(image, max_value):
     del transform
     gc.collect()
     return image
-
 
 def postprocess_image(image, max_value):
     image = image.squeeze(0).detach().cpu()
@@ -107,97 +104,14 @@ def perform_denoising(model, image, device, dtype = 'np.float32'):
         denoised_image = (denoised_image * 65535).astype(np.uint16)
     elif dtype == 'np.uint8':
         denoised_image = (denoised_image * 255).astype(np.uint8)
+    # else dtype == 'np.float32'
 
     # Free memory
-    del l, denoised_l
+    del l, denoised_l, channels
     torch.cuda.empty_cache()
     gc.collect()
 
     return denoised_image
-
-def sharpen_image(image):
-    kernel = np.array([[0, -1, 0],
-                       [-1, 5,-1],
-                       [0, -1, 0]])
-    return cv2.filter2D(image, -1, kernel)
-
-def sobel_images(images):
-    sobel_images = []
-    for image in images:
-        # Split the image into its respective channels
-        channels = cv2.split(image)
-        sobel_channels = []
-
-        for channel in channels:  # loop su ogni canale (RGB o altri canali)
-            # Apply Sobel filter on the channel
-            sobel_x = cv2.Sobel(channel, cv2.CV_64F, 1, 0, ksize=5)
-            sobel_y = cv2.Sobel(channel, cv2.CV_64F, 0, 1, ksize=5)
-
-            # Combine Sobel X and Y
-            sobel = np.hypot(sobel_x, sobel_y)
-
-            # Apply Gaussian blur to smoothen edges
-            sobel = cv2.GaussianBlur(sobel, (9, 9), 0)
-
-            # Normalize the result to 0-1
-            sobel = normalize(sobel)
-
-            # Append the sobelized channel to the list
-            sobel_channels.append(sobel)
-
-        # Merge the sobelized channels back into an image
-        sobel_image = cv2.merge(sobel_channels)
-
-        # Append the sobelized image to the list
-        sobel_images.append(sobel_image)
-
-    return sobel_images
-
-
-"""def unsharp_mask(images, model, strength, k = 1.5):
-    
-    blurred_images = dncnn_images(model, images)
-
-    save_images(blurred_images, './images/blurred', name = 'blurred')
-
-    merged_images = [cv2.addWeighted(image, 1 + strength, blurred_image, -strength, 0) for image, blurred_image in zip(images, blurred_images)]
-    
-    save_images(merged_images, './images/merged', name = 'merged')
-    
-    del blurred_images
-    gc.collect()
-    return merged_images"""
-
-def unsharp_mask(images, model, strength):
-    blurred_images = dncnn_images(model, images)
-
-    sobel_masks = sobel_images(images)
-
-    merged_images = []
-
-    for image, blurred_image, sobel_mask in zip(images, blurred_images, sobel_masks):
-        image = image.astype(np.float32)
-
-        # Adjust the strength based on the Sobel mask
-        sharp_component = cv2.multiply(image, 1 + strength * sobel_mask)
-        sharp_component = normalize(sharp_component)
-        blurred_component = cv2.multiply(blurred_image, 1 - strength * sobel_mask)
-        blurred_component = normalize(blurred_component)
-        # manage too sharpened pixels
-        sharp_component = np.clip(sharp_component, 0, 1)
-        blurred_component = np.clip(blurred_component, 0, 1)
-
-        # Merge the components
-        merged_image = cv2.add(sharp_component, blurred_component)
-        merged_image = to_16bit(merged_image)
-        merged_images.append(merged_image)
-
-    del blurred_images, sobel_masks, sharp_component, blurred_component
-    gc.collect()
-
-    save_images(merged_images, './images/merged', name='merged')
-
-    return merged_images
 
 def dncnn_images(model, images):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
