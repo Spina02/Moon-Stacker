@@ -1,4 +1,3 @@
-from venv import create
 import matplotlib.pyplot as plt
 from numpy import uint16
 import os

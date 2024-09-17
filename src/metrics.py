@@ -1,12 +1,6 @@
 from config import *
 import numpy as np
 import cv2
-#from skimage.metrics import niqe
-from skimage import img_as_float
-
-#def calculate_niqe(image):
-#    image = img_as_float(image)
-#    return niqe(image)
 
 def calculate_contrast(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) != 2 else image

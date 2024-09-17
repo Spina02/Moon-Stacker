@@ -3,7 +3,7 @@ from image import *
 from preprocessing import preprocess_images
 from stacking import *
 #from denoise import model_init, perform_denoising
-from metrics import calculate_psnr
+import cv2
 
 def image_stacking(images = None, features_alg = 'orb', stacking_alg = 'median', average_alg = None, n_features = 10000, grayscale = True, crop = True, unsharp = True):
 
@@ -29,13 +29,15 @@ def image_stacking(images = None, features_alg = 'orb', stacking_alg = 'median',
     path = config.output_folder + f'/{features_alg}_{stacking_alg}_{n_features}' 
     path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
     save_image(image, path)
-    psnr = calculate_psnr(image_0, image)
+    psnr = cv2.PSNR(image_0, image)
     print(f'PSNR: {psnr}')
     
     return image
 
-def image_stacking_2(images, features_alg = 'orb', average_alg = 'composite', stacking_alg = 'median'):
+def image_stacking(images, features_alg = 'orb', average_alg = 'composite', stacking_alg = 'median'):
     print()
+    image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False,crop = True, grayscale = grayscale, unsharp = False)[0]
+    save_image(image_0, config.output_folder + '/original')
 
     preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False)
     for stacking_alg in ['median', 'sigma clipping', 'weighted average']:
@@ -56,10 +58,11 @@ def image_stacking_2(images, features_alg = 'orb', average_alg = 'composite', st
             path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
             print(f'\nsaving {path}')
             save_image(image, path)
+            psnr = calculate_psnr(image_0, image)
+            print(f'PSNR: {psnr}')
 
 def main():
-    image_stacking_2(read_images(config.input_folder), stacking_alg = 'median')
-
+    image_stacking(read_images(config.input_folder), stacking_alg = 'median')
 
 if __name__ == '__main__':
     main()
