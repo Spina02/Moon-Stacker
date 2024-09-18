@@ -58,7 +58,6 @@ def save_image(image, file_path, out_format = config.output_format.lower()):
 
 def save_images(images, folder_path, out_format = config.output_format, name = None, clear = True):
     create_folder(folder_path)
-    print()
     if clear:
         for f in os.listdir(folder_path):
             os.remove(os.path.join(folder_path, f))
