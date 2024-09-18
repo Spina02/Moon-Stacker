@@ -38,14 +38,16 @@ Below a comparison between the same images, after some editing in Registax.
 
 1. **Install Dependencies**: 
 
-    - Python 3.x
-    - OpenCV
-    - rawpy
     - numpy
+    - opencv-python
     - imageio
+    - rawpy
+    - torch
+    - scikit-image
+    - matplotlib
 
     ```sh
-    sudo apt-get install numpy rawpy opencv imageio
+    pip install -r requirements.txt
     ```
 
 2. **Prepare Images**: Place your RAW images in the `images/raw/` directory (alternatively, you can add your JPEG images into the `jpg` folder, though this is not advised)..

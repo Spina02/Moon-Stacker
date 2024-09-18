@@ -54,34 +54,41 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
         for thresholds in thresholds_list:
             for ks in ks_list:
                 for stacking_alg in stacking_algorithms:
-                    print(f"Testing with strengths: {strengths}, thresholds: {thresholds}, ks: {ks}, stacking: {stacking_alg}")
+                    for gradient_strength in [1.0, 1.2, 1.5]:
+                        for gradient_threshold in [0.01, 0.02, 0.05]:
+                            print(f"Testing with strengths: {strengths}, thresholds: {thresholds}, ks: {ks}, stacking: {stacking_alg}")
 
-                    # Preprocess the images with the selected sharpening method
-                    unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
-                                                  unsharp=True, strengths=strengths, thresholds=thresholds, ks=ks, 
-                                                  calibrate=False, sharpening_method=method)
+                            # Preprocess the images with the selected sharpening method
+                            unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
+                                                          unsharp=True, strengths=strengths, thresholds=thresholds, ks=ks, 
+                                                          calibrate=False, sharpening_method=method, gradient_strength=1.0, gradient_threshold=0.02)
 
-                    # Stack the images using the selected stacking algorithm
-                    if stacking_alg == 'weighted average':
-                        image = weighted_average_stack(unsharped, method=average_alg)
-                    elif stacking_alg == 'median':
-                        image = median_stack(unsharped)
-                    elif stacking_alg == 'sigma clipping':
-                        image = sigma_clipping(unsharped)
+                            # Stack the images using the selected stacking algorithm
+                            if stacking_alg == 'weighted average':
+                                image = weighted_average_stack(unsharped, method=average_alg)
+                            elif stacking_alg == 'median':
+                                image = median_stack(unsharped)
+                            elif stacking_alg == 'sigma clipping':
+                                image = sigma_clipping(unsharped)
 
-                    # Save the image
-                    name = f'/{features_alg}_strengths_{strengths}_ks_{ks}_thresholds_{thresholds}_stacking_{stacking_alg}'
-                    print(f'\nSaving {name}')
-                    save_image(image, config.output_folder, name = name)
+                            # name
+                            if method == 'multi_scale':
+                                name = f'{features_alg}_strengths_{strengths}_ks_{ks}_thresholds_{thresholds}_stacking_{stacking_alg}'
+                            elif method == 'gradient':
+                                name = f'{features_alg}_strength_{gradient_strength}_threshold_{gradient_threshold}_stacking_{stacking_alg}'
 
-                    # Calcola il PSNR rispetto all'immagine originale
-                    psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
-                    print(f'PSNR: {psnr}')
+                            # Save the image
+                            print(f'\nSaving {name}')
+                            save_image(image, config.output_folder, name)
 
-                    # Aggiorna il miglior PSNR trovato
-                    if psnr > best_psnr:
-                        best_psnr = psnr
-                        best_img = name
+                            # Calcola il PSNR rispetto all'immagine originale
+                            psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
+                            print(f'PSNR: {psnr}')
+
+                            # Aggiorna il miglior PSNR trovato
+                            if psnr > best_psnr:
+                                best_psnr = psnr
+                                best_img = name
 
     print(f'Best PSNR: {best_psnr} at {best_img}')
 

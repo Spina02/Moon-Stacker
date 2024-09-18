@@ -121,12 +121,26 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         denoised_image = perform_denoising(model, image, device)
 
-        # Calcola la magnitudine del gradiente per l'immagine originale
-        gradient_x, gradient_y = np.gradient(normalized_image)
-        gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+        # Se l'immagine ha più di due dimensioni, calcola il gradiente per ogni canale
+        if normalized_image.ndim == 3:  # Immagine a colori (es. RGB)
+            gradient_magnitude = np.zeros_like(normalized_image)
+            for i in range(normalized_image.shape[2]):  # Per ogni canale
+                gradient_x, gradient_y = np.gradient(normalized_image[:, :, i])
+                gradient_magnitude[:, :, i] = np.sqrt(gradient_x**2 + gradient_y**2)
+            
+            # Fai la media dei gradienti sui canali
+            gradient_magnitude = np.mean(gradient_magnitude, axis=2)
+        else:
+            # Immagine in scala di grigi
+            gradient_x, gradient_y = np.gradient(normalized_image)
+            gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
 
         # Crea la maschera: dove il gradiente è sotto la soglia, applichiamo il denoising
         denoise_mask = np.where(gradient_magnitude < threshold, 1, 0)
+
+        # Se l'immagine è RGB, espandi la maschera denoise_mask per avere 3 canali
+        if normalized_image.ndim == 3:
+            denoise_mask = np.repeat(denoise_mask[:, :, np.newaxis], 3, axis=2)
 
         # Applica la maschera: nelle aree con basso gradiente, usa l'immagine denoised
         # nelle aree con alto gradiente, mantieni i dettagli dell'immagine originale
@@ -134,7 +148,12 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
 
         # Applica un leggero unsharp mask nelle aree ad alto gradiente
         detail_mask = 1 - denoise_mask  # Maschera inversa per le aree con dettagli
-        detail_mask = cv2.GaussianBlur(detail_mask, (3, 3), 1)  # Sfuma leggermente la maschera
+
+        # Converti la maschera in un formato supportato (float32)
+        detail_mask = detail_mask.astype(np.float32)
+
+        # Sfuma leggermente la maschera usando GaussianBlur
+        detail_mask = cv2.GaussianBlur(detail_mask, (3, 3), 1)
 
         # Amplifica i dettagli nelle aree selezionate dalla maschera
         amplified_details = (normalized_image - denoised_image) * strength * detail_mask
@@ -149,10 +168,10 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
         sharpened_image_16bit = sharpened_image.astype(np.uint16)
         sharpened_images.append(sharpened_image_16bit)
 
-        if DEBUG:
-            save_debug_image(sharpened_image_16bit, './debug_images', f'gradient_mask_unsharp_{idx}')
+        #if DEBUG: save_debug_image(sharpened_image_16bit, './debug_images', f'gradient_mask_unsharp_{idx}')
     
     return sharpened_images
+
 
 def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
     import torch
@@ -180,7 +199,7 @@ def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
             details_filtered = np.where(detail_magnitude >= detail_threshold, details, 0)
 
             # Salva i dettagli filtrati per il debugging
-            save_debug_image(details_filtered, './debug_images', f'details_filtered_{idx}_scale_{scale_idx}')
+            #save_debug_image(details_filtered, './debug_images', f'details_filtered_{idx}_scale_{scale_idx}')
 
             # Normalizza utilizzando la deviazione standard dei dettagli filtrati
             std_dev = np.std(details_filtered)
