@@ -1,4 +1,4 @@
-MAX_IMG = 1
+MAX_IMG = 10
 COLAB = False
 DEBUG = 1 # 0: no debug, 1: print debug, 2: very verbose debug
 IS_MOON = True

@@ -110,15 +110,6 @@ def save_debug_image(image, path, name):
 
 # ------------------ Unsharp Masking ------------------
 
-
-"""
-# Crea una maschera basata sui gradienti per mantenere i dettagli
-gradient_magnitude = np.gradient(image)
-denoise_mask = np.where(gradient_magnitude < threshold, 1, 0)
-denoised_image = denoised_image * denoise_mask + image * (1 - denoise_mask)
-
-"""
-
 def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
     import torch
 
