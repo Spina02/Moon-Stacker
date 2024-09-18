@@ -110,6 +110,50 @@ def save_debug_image(image, path, name):
 
 # ------------------ Unsharp Masking ------------------
 
+def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
+    sharpened_images = []
+
+    for idx, image in enumerate(images):
+        # Normalizza l'immagine
+        normalized_image = image.astype(np.float32) / 65535.0
+
+        # Applica il denoising con DnCNN
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        denoised_image = perform_denoising(model, image, device)
+
+        # Calcola la magnitudine del gradiente per l'immagine originale
+        gradient_x, gradient_y = np.gradient(normalized_image)
+        gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+
+        # Crea la maschera: dove il gradiente è sotto la soglia, applichiamo il denoising
+        denoise_mask = np.where(gradient_magnitude < threshold, 1, 0)
+
+        # Applica la maschera: nelle aree con basso gradiente, usa l'immagine denoised
+        # nelle aree con alto gradiente, mantieni i dettagli dell'immagine originale
+        final_image = denoised_image * denoise_mask + normalized_image * (1 - denoise_mask)
+
+        # Applica un leggero unsharp mask nelle aree ad alto gradiente
+        detail_mask = 1 - denoise_mask  # Maschera inversa per le aree con dettagli
+        detail_mask = cv2.GaussianBlur(detail_mask, (3, 3), 1)  # Sfuma leggermente la maschera
+
+        # Amplifica i dettagli nelle aree selezionate dalla maschera
+        amplified_details = (normalized_image - denoised_image) * strength * detail_mask
+
+        # Somma i dettagli amplificati all'immagine finale
+        sharpened_image = final_image + amplified_details
+
+        # Clip per mantenere il range valido [0, 65535]
+        sharpened_image = np.clip(sharpened_image, 0, 1) * 65535
+
+        # Converti di nuovo a 16-bit
+        sharpened_image_16bit = sharpened_image.astype(np.uint16)
+        sharpened_images.append(sharpened_image_16bit)
+
+        if DEBUG:
+            save_debug_image(sharpened_image_16bit, './debug_images', f'gradient_mask_unsharp_{idx}')
+    
+    return sharpened_images
+
 def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
     import torch
 
@@ -149,20 +193,20 @@ def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
             detail_mask = 1 / (1 + np.exp(-k * (detail_magnitude - threshold)))
 
             # apply gaussian blur to the mask
-            detail_mask = cv2.GaussianBlur(detail_mask, (3, 3), 1)
+            detail_mask = cv2.GaussianBlur(detail_mask, (5, 5), 1)
 
             # Amplifica i dettagli utilizzando la maschera
             amplified_details = details_filtered * strength * detail_mask
 
             # Limita i dettagli amplificati
-            max_amplification = 1000  # Regola questo valore secondo necessità
+            max_amplification = 3000  # Regola questo valore secondo necessità
             amplified_details = np.clip(amplified_details, -max_amplification, max_amplification)
 
             # Somma i dettagli amplificati
             total_details += amplified_details / len(strengths)
 
         # Aggiungi i dettagli totali all'immagine originale
-        sharpened_image = 0.5*image + 0.5*denoised_image + total_details
+        sharpened_image = 0.7*image + 0.3*denoised_image + total_details
 
         # Clip per mantenere il range valido [0, 65535]
         sharpened_image = np.clip(sharpened_image, 0, 65535)
@@ -331,7 +375,7 @@ def preprocess_images(images, calibrate=True,
                       crop=True, margin=10,
                       unsharp=True, strengths=None, thresholds=None, ks=None, noise_levels=None,
                       high_freq_emphasis=False, boost=1.5,
-                      grayscale=True):
+                      grayscale=True, sharpening_method='multi_scale', gradient_strength=1.0, gradient_threshold=0.02):
     if calibrate:
         imgs = calibrate_images(images)
     else:
@@ -347,7 +391,7 @@ def preprocess_images(images, calibrate=True,
         # Inizializza il modello DNCNN una volta
         model = model_init()
         
-        # Imposta parametri di default se non forniti
+        # Imposta parametri di default se non forniti (multi-scale unsharp mask)
         if strengths is None:
             strengths = [0.8, 0.9, 1]
         if thresholds is None:
@@ -355,8 +399,14 @@ def preprocess_images(images, calibrate=True,
         if ks is None:
             ks = [5, 5, 5]
 
-
-        imgs = multi_scale_unsharp_mask_dncnn(imgs, model, strengths, thresholds, ks)
+        if sharpening_method == 'multi_scale':
+            # Applica multi-scale unsharp mask
+            imgs = multi_scale_unsharp_mask_dncnn(imgs, model, strengths, thresholds, ks)
+        elif sharpening_method == 'gradient':
+            # Applica il denoising selettivo con maschera di gradiente
+            imgs = gradient_mask_denoise_unsharp(imgs, model, strength=gradient_strength, threshold=gradient_threshold)
+        else:
+            raise ValueError(f"Invalid sharpening method: {sharpening_method}")
     
     if high_freq_emphasis:
         # Applica l'enfasi delle alte frequenze

@@ -46,21 +46,24 @@ def read_images(folder_path):
         if DEBUG: progress(len(images), len(image_paths), f'images read')
     return images
 
-def save_image(image, file_path, out_format = config.output_format.lower()):
-    if not file_path.endswith(f'.{out_format}'):
-        file_path += f'.{out_format}'
+def save_image(image, folder_path, file_name, out_format=config.output_format.lower()):
+    if not file_name.endswith(f'.{out_format}'):
+        file_name += f'.{out_format}'
+
+    file_path = os.path.join(folder_path, file_name)
 
     if image.dtype == np.uint16 and out_format not in ['tiff']:
-        if DEBUG > 1: print(f'\nCan not save in 16-bit, connverting to 8-bit')
+        if DEBUG > 1: print(f'\nCan not save in 16-bit, converting to 8-bit')
         image = to_8bit(image)
 
     imageio.imsave(file_path, image)
 
-def save_images(images, folder_path, out_format = config.output_format, name = None, clear = True):
+def save_images(images, folder_path, out_format=config.output_format, name=None, clear=True):
     create_folder(folder_path)
     if clear:
         for f in os.listdir(folder_path):
             os.remove(os.path.join(folder_path, f))
     for i, image in enumerate(images):
-        save_image(image, f'{folder_path}/' + (f'output' if name is None else name) + f'_{i}', out_format)
+        file_name = f'output_{i}' if name is None else f'{name}_{i}'
+        save_image(image, folder_path, file_name, out_format)
         if DEBUG: progress(i + 1, len(images), f'images saved')
