@@ -5,7 +5,7 @@ from stacking import *
 #from denoise import model_init, perform_denoising
 import cv2
 
-def image_stacking(images, features_alg = 'orb', strength = 0.9, average_alg = 'composite', stacking_alg = 'median', n_features = 10000):
+def image_stacking(images, features_alg = 'orb', average_alg = 'composite', stacking_alg = 'median', n_features = 10000):
     print()
     image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False,crop = True, grayscale = True, unsharp = False, calibrate=False)[0]
     save_images([image_0], config.output_folder, name = 'original')
@@ -16,28 +16,27 @@ def image_stacking(images, features_alg = 'orb', strength = 0.9, average_alg = '
     preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False)
     #for stacking_alg in ['median', 'sigma clipping', 'weighted average']:
     
-    for strength in [0.7, 0.8, 0.9]:
-        for threshold in [0.1, 0.15, 0.2]:
-            print(f"unsharping with strength: {strength}")#, sigma: {sigma}, tale: {tale}, low_clip: {low_clip}, high_clip: {high_clip}")
-            unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = True, unsharp = True, strength = strength, calibrate = False, threshold = threshold)
+    #for strengths in [0.1, 0.3, 0.5]:
+    #    for thresholds in [0.05, 0.1, 0.15]:
+    unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = True, unsharp = True, calibrate = False)
 
-            # Stack the images
-            if stacking_alg == 'weighted average':
-                image = weighted_average_stack(unsharped, method=average_alg)
-            elif stacking_alg == 'median':
-                image = median_stack(unsharped)
-            elif stacking_alg == 'sigma clipping':
-                image = sigma_clipping(unsharped)
+    # Stack the images
+    if stacking_alg == 'weighted average':
+        image = weighted_average_stack(unsharped, method=average_alg)
+    elif stacking_alg == 'median':
+        image = median_stack(unsharped)
+    elif stacking_alg == 'sigma clipping':
+        image = sigma_clipping(unsharped)
 
-            # Save the image
-            path = config.output_folder + f'/{features_alg}_{strength}_{stacking_alg}' 
-            path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
-            path += f'_{threshold}'
-            print(f'\nsaving {path}')
-            save_image(image, path)
-            print(image_0.shape, image.shape)
-            psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
-            print(f'PSNR: {psnr}')
+    # Save the image
+    path = config.output_folder + f'/{features_alg}_{stacking_alg}' 
+    path += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
+    #path += f'_{threshold}'
+    print(f'\nsaving {path}')
+    save_image(image, path)
+    print(image_0.shape, image.shape)
+    psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
+    print(f'PSNR: {psnr}')
 
 def grid_search(images, features_alg = 'orb', average_alg = 'composite', stacking_alg = 'median', n_features = 10000):
     print()
@@ -96,7 +95,7 @@ def main():
     #    for tile in tiles:
     #        images = [enhance_contrast(image, clip, tile) for image in images]
     #        save_images(images, config.output_folder, name = f'enhanced_{clip}_{tile}', clear=False)
-    image_stacking(read_images(config.input_folder), stacking_alg = 'median', strength = 0.7)
+    image_stacking(read_images(config.input_folder), stacking_alg = 'median')
 
     #grid_search(read_images(config.input_folder), stacking_alg = 'median')
 
