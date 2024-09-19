@@ -103,13 +103,6 @@ def enhance_contrast(image, clip_limit=0.25, tile_grid_size=(2, 2)):
 
 # ------------------ Unsharp Masking ------------------
 
-
-def save_debug_image(image, path, name):
-    """Salva un'immagine per il debugging."""
-    save_images([to_16bit(image)], path, name=name, clear=False)
-
-# ------------------ Unsharp Masking ------------------
-
 def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
     sharpened_images = []
 
@@ -240,104 +233,6 @@ def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
 
     return sharpened_images
 
-def high_frequency_emphasis_dncnn(images, model, boost=1.5):
-    emphasized_images = []
-
-    for idx, image in enumerate(images):
-        image = normalize(image).astype(np.float32)
-        denoised_image = dncnn_images(model, [image])[0]
-
-        # Estrai le componenti ad alta frequenza
-        high_freq = image - denoised_image
-
-        # Enfatizza le componenti ad alta frequenza
-        emphasized_image = image + boost * high_freq
-
-        # Clip per mantenere il range valido [0, 1]
-        emphasized_image = np.clip(emphasized_image, 0, 1)
-
-        # Converti di nuovo a 16-bit
-        emphasized_image = to_16bit(emphasized_image)
-
-        emphasized_images.append(emphasized_image)
-
-        if DEBUG:
-            progress(idx + 1, len(images), 'Images processed with high-frequency emphasis')
-
-    return emphasized_images
-
-def unsharp_mask_2(images, model, strength, ksize=3, sigma = 0, tale = (9, 9), low_clip = 0.01, high_clip = 0.5):
-
-    images = unsharp_mask(images, strength)
-    sobel_masks = sobel_images(images, ksize=ksize, sigma = sigma, tale = tale, low_clip = low_clip, high_clip = high_clip)
-    blurred_images = dncnn_images(model, images)
-    merged_images = []
-
-    i = 1
-    for image, blurred_image, sobel_mask in zip(images, blurred_images, sobel_masks):
-        
-        # Convert everything to float32
-        sharp_image = image.astype(np.float32)
-
-        if i == 0:
-            save_images([to_16bit(sharp_image)], './images/sharpened', name='sharp_pre', clear = False)
-            save_images([to_16bit(blurred_image)], './images/blurred', name='blurred_pre', clear = False)
-
-        sobel_mask = normalize(sobel_mask)
-
-        # Apply sharpening with Sobel mask modulation
-        sharp_component = sharp_image * (0.5 + normalize(sobel_mask * strength))
-        sharp_component = normalize(sharp_component)
-        sharp_component = np.clip(sharp_component, 0, 1)  # Clip to valid range
-
-        # Apply blurring with inverted Sobel mask modulation
-        blurred_component = blurred_image * normalize(0.5 - sobel_mask * strength)
-        blurred_component = normalize(blurred_component)
-        blurred_component = np.clip(blurred_component, 0, 1)  # Clip to valid range
-
-        if i == 0:
-            save_images([to_16bit(sharp_component)], './images/merged', name='sharp', clear = False)
-            save_images([to_16bit(blurred_component)], './images/merged', name='blurred', clear = False)
-            i += 1
-
-        # Merge the components
-        merged_image = cv2.addWeighted(sharp_component, 0.6, blurred_component, 0.4, 0)
-        merged_image = np.clip(merged_image, 0, 1)  # Ensure valid range
-
-        # Convert back to 16-bit
-        merged_image = to_16bit(merged_image)
-        merged_image = white_balance(merged_image)
-        #merged_image = enhance_contrast(merged_image)
-        merged_images.append(merged_image)
-
-    del blurred_images, sobel_masks
-    gc.collect()
-
-    #save_images(merged_images[:1], './images/merged', name='merged', clear = False)
-
-    return merged_images
-
-def unsharp_mask(images, strength):
-    
-    #blurred_images = dncnn_images(model, images)
-    blurred_images = [cv2.GaussianBlur(image, (3, 3), 3) for image in images]
-
-    #save_images(blurred_images, './images/blurred', name = 'blurred')
-
-    merged_images = [to_16bit(cv2.addWeighted(to_16bit(image), 0.5 + strength, to_16bit(blurred_image), 0.5 -strength, 0)) for image, blurred_image in zip(images, blurred_images)]
-    #blurred_images = dncnn_images(model, images)
-    blurred_images = [cv2.GaussianBlur(image, (3, 3), 3) for image in images]
-
-    #save_images(blurred_images, './images/blurred', name = 'blurred')
-
-    merged_images = [to_16bit(cv2.addWeighted(to_16bit(image), 0.5 + strength, to_16bit(blurred_image), 0.5 -strength, 0)) for image, blurred_image in zip(images, blurred_images)]
-    
-    save_images(merged_images, './images/merged', name = 'merged', clear = False)
-    
-    del blurred_images
-    gc.collect()
-    return merged_images
-
 # ------------------ Cropping ------------------
 
 def crop_to_center(images, margin=10):
@@ -392,8 +287,7 @@ def crop_to_center(images, margin=10):
 def preprocess_images(images, calibrate=True,
                       align=True, algo='orb', nfeatures=10000, 
                       crop=True, margin=10,
-                      unsharp=True, strengths=None, thresholds=None, ks=None, noise_levels=None,
-                      high_freq_emphasis=False, boost=1.5,
+                      unsharp=True, strengths=None, thresholds=None, ks=None,
                       grayscale=True, sharpening_method='multi_scale', gradient_strength=1.0, gradient_threshold=0.02):
     if calibrate:
         imgs = calibrate_images(images)
@@ -426,11 +320,6 @@ def preprocess_images(images, calibrate=True,
             imgs = gradient_mask_denoise_unsharp(imgs, model, strength=gradient_strength, threshold=gradient_threshold)
         else:
             raise ValueError(f"Invalid sharpening method: {sharpening_method}")
-    
-    if high_freq_emphasis:
-        # Applica l'enfasi delle alte frequenze
-        model = model_init()  # Assicurati che il modello sia inizializzato
-        imgs = high_frequency_emphasis_dncnn(imgs, model, boost=boost)
     
     if grayscale:
         imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) == 3 else image for image in imgs]

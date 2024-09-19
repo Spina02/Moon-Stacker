@@ -54,14 +54,20 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
         for thresholds in thresholds_list:
             for ks in ks_list:
                 for stacking_alg in stacking_algorithms:
-                    for gradient_strength in [1.0, 1.2, 1.5]:
-                        for gradient_threshold in [0.01, 0.02, 0.05]:
-                            print(f"Testing with strengths: {strengths}, thresholds: {thresholds}, ks: {ks}, stacking: {stacking_alg}")
+                    for gradient_strength in [0.8, 1.5, 2]:
+                        for gradient_threshold in [0.001, 0.005, 0.007]:
+                            # name
+                            if method == 'multi_scale':
+                                print(f'\nRunning {features_alg} with strengths {strengths}, thresholds {thresholds}, ks {ks} and stacking {stacking_alg}')
+                                name = f'{features_alg}_strengths_{strengths}_ks_{ks}_thresholds_{thresholds}_stacking_{stacking_alg}'
+                            elif method == 'gradient':
+                                print(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold} and stacking {stacking_alg}')
+                                name = f'{features_alg}_strength_{gradient_strength}_threshold_{gradient_threshold}_stacking_{stacking_alg}'
 
                             # Preprocess the images with the selected sharpening method
                             unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
                                                           unsharp=True, strengths=strengths, thresholds=thresholds, ks=ks, 
-                                                          calibrate=False, sharpening_method=method, gradient_strength=1.0, gradient_threshold=0.02)
+                                                          calibrate=False, sharpening_method=method, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold)
 
                             # Stack the images using the selected stacking algorithm
                             if stacking_alg == 'weighted average':
@@ -70,12 +76,6 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
                                 image = median_stack(unsharped)
                             elif stacking_alg == 'sigma clipping':
                                 image = sigma_clipping(unsharped)
-
-                            # name
-                            if method == 'multi_scale':
-                                name = f'{features_alg}_strengths_{strengths}_ks_{ks}_thresholds_{thresholds}_stacking_{stacking_alg}'
-                            elif method == 'gradient':
-                                name = f'{features_alg}_strength_{gradient_strength}_threshold_{gradient_threshold}_stacking_{stacking_alg}'
 
                             # Save the image
                             print(f'\nSaving {name}')
@@ -94,8 +94,8 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
 
 
 def main():
-    grid_search(read_images(config.input_folder), method='multi_scale')
-    #grid_search(read_images(config.input_folder), method='gradient')
+    #grid_search(read_images(config.input_folder), method='multi_scale')
+    grid_search(read_images(config.input_folder), method='gradient')
 
 if __name__ == '__main__':
     main()
