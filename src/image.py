@@ -39,6 +39,7 @@ def read_image(file_path):
     return image
 
 def read_images(folder_path):
+    create_folder(folder_path)
     image_paths = read_folder(folder_path)
     images = []
     for path in image_paths:

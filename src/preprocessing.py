@@ -111,6 +111,9 @@ def compute_gradient_magnitude(image):
 
     gradient_x, gradient_y = np.gradient(gray_image)
     gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+    # make gradient_magnitude 3D if the input image is 3D
+    if image.ndim == 3:
+        gradient_magnitude = np.repeat(gradient_magnitude[:, :, np.newaxis], 3, axis=2)
     return gradient_magnitude
 
 def new_gmdunsharp(images, model, denoise_strength=0.8, threshold=0.02, blur_kernel_size=3, sharpen_strength=1.0):
@@ -134,10 +137,10 @@ def new_gmdunsharp(images, model, denoise_strength=0.8, threshold=0.02, blur_ker
         denoise_mask = np.where(gradient_magnitude < threshold, 1.0, 0.0).astype(np.float32)
 
         # Smooth the denoise mask for softer transitions
-        denoise_mask = cv2.GaussianBlur(denoise_mask, (blur_kernel_size, blur_kernel_size), 0)
+        denoise_mask = cv2.GaussianBlur(denoise_mask, (blur_kernel_size, blur_kernel_size), 0.5)
 
         # Apply the denoise mask to blend denoised and original images
-        blended_image = denoised_image * denoise_mask + normalized_image * (1 - denoise_mask)
+        blended_image = np.clip(denoised_image * denoise_mask + normalized_image * (1 - denoise_mask), 0, 1)
 
         # Apply unsharp masking to the entire image
         #sharpened_image = unsharp_mask(blended_image, strength=sharpen_strength)
@@ -152,7 +155,7 @@ def new_gmdunsharp(images, model, denoise_strength=0.8, threshold=0.02, blur_ker
 
     return sharpened_images
 
-def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
+def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, denoise_strength = 0.7):
     sharpened_images = []
 
     for idx, image in enumerate(images):
@@ -162,6 +165,8 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
         # Applica il denoising con DnCNN
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         denoised_image = perform_denoising(model, image, device)
+
+        denoised_image = denoised_image * denoise_strength + normalized_image * (1 - denoise_strength)
 
         # Se l'immagine ha più di due dimensioni, calcola il gradiente per ogni canale
         if normalized_image.ndim == 3:  # Immagine a colori (es. RGB)
@@ -186,16 +191,14 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
 
         # Applica la maschera: nelle aree con basso gradiente, usa l'immagine denoised
         # nelle aree con alto gradiente, mantieni i dettagli dell'immagine originale
-        final_image = denoised_image * denoise_mask + normalized_image * (1 - denoise_mask)
+        #!! modified here
+        final_image = (denoised_image * denoise_mask) + (normalized_image * (1 - denoise_mask))
+
+        # Sfuma leggermente la maschera usando GaussianBlur
+        #denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
 
         # Applica un leggero unsharp mask nelle aree ad alto gradiente
         detail_mask = 1 - denoise_mask  # Maschera inversa per le aree con dettagli
-
-        # Converti la maschera in un formato supportato (float32)
-        detail_mask = detail_mask.astype(np.float32)
-
-        # Sfuma leggermente la maschera usando GaussianBlur
-        detail_mask = cv2.GaussianBlur(detail_mask, (3, 3), 1)
 
         # Amplifica i dettagli nelle aree selezionate dalla maschera
         amplified_details = (normalized_image - denoised_image) * strength * detail_mask
@@ -205,6 +208,10 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
 
         # Clip per mantenere il range valido [0, 65535]
         sharpened_image = np.clip(sharpened_image, 0, 1) * 65535
+
+        if idx == 0:
+            save_image(to_8bit(sharpened_image), './debug_images', f'gmdunsharp_{strength}_{threshold}')
+            save_image(to_8bit(detail_mask), './debug_images', f'detail_mask_{strength}_{threshold}')
 
         # Converti di nuovo a 16-bit
         sharpened_image_16bit = sharpened_image.astype(np.uint16)
@@ -337,7 +344,7 @@ def preprocess_images(images, calibrate=True,
                       align=True, algo='orb', nfeatures=10000, 
                       crop=True, margin=10,
                       unsharp=True, strengths=None, thresholds=None, ks=None,
-                      grayscale=True, sharpening_method='multi_scale', gradient_strength=1.0, gradient_threshold=0.02):
+                      grayscale=True, sharpening_method='multi_scale', gradient_strength=1.0, gradient_threshold=0.02, denoise_strength = 0.7):
     if calibrate:
         imgs = calibrate_images(images)
     else:
@@ -366,7 +373,8 @@ def preprocess_images(images, calibrate=True,
             imgs = multi_scale_unsharp_mask_dncnn(imgs, model, strengths, thresholds, ks)
         elif sharpening_method == 'gradient':
             # Applica il denoising selettivo con maschera di gradiente
-            imgs = gradient_mask_denoise_unsharp(imgs, model, strength=gradient_strength, threshold=gradient_threshold)
+            imgs = gradient_mask_denoise_unsharp(imgs, model, strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
+            #imgs = new_gmdunsharp(imgs, model, denoise_strength=gradient_strength, threshold=gradient_threshold)
         else:
             raise ValueError(f"Invalid sharpening method: {sharpening_method}")
     
