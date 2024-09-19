@@ -4,7 +4,7 @@ from config import DEBUG
 from utils import progress
 from image import to_8bit
 from denoise import model_init, dncnn_images, perform_denoising
-from image import save_images, normalize, to_16bit
+from image import *
 import gc
 from calibration import calibrate_images
 from align import align_images
@@ -38,7 +38,6 @@ def sobel_images(images, ksize=5, sigma = 0, tale = (9, 9), low_clip = 0.05, hig
             sobel = np.clip(sobel, low_clip, high_clip)  # Clip to a maximum value (adjust 0.5 as needed)
 
             sobel_channels.append(sobel)
-
 
         # Merge the channels back
         sobel_image = cv2.merge(sobel_channels)
@@ -102,6 +101,56 @@ def enhance_contrast(image, clip_limit=0.25, tile_grid_size=(2, 2)):
     return enhanced_image
 
 # ------------------ Unsharp Masking ------------------
+
+def compute_gradient_magnitude(image):
+    if image.ndim == 3:
+        # Convert to grayscale for gradient computation
+        gray_image = cv2.cvtColor((image * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
+    else:
+        gray_image = image
+
+    gradient_x, gradient_y = np.gradient(gray_image)
+    gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+    return gradient_magnitude
+
+def new_gmdunsharp(images, model, denoise_strength=0.8, threshold=0.02, blur_kernel_size=3, sharpen_strength=1.0):
+    sharpened_images = []
+
+    for idx, image in enumerate(images):
+        # Normalize the image
+        normalized_image = image.astype(np.float32) / 65535.0
+
+        # Apply denoising with adjustable strength
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        denoised_image = perform_denoising(model, normalized_image, device)
+
+        # Blend the denoised image with the original based on denoise_strength
+        denoised_image = denoised_image * denoise_strength + normalized_image * (1 - denoise_strength)
+
+        # Compute gradient magnitude
+        gradient_magnitude = compute_gradient_magnitude(normalized_image)
+
+        # Create the denoise mask
+        denoise_mask = np.where(gradient_magnitude < threshold, 1.0, 0.0).astype(np.float32)
+
+        # Smooth the denoise mask for softer transitions
+        denoise_mask = cv2.GaussianBlur(denoise_mask, (blur_kernel_size, blur_kernel_size), 0)
+
+        # Apply the denoise mask to blend denoised and original images
+        blended_image = denoised_image * denoise_mask + normalized_image * (1 - denoise_mask)
+
+        # Apply unsharp masking to the entire image
+        #sharpened_image = unsharp_mask(blended_image, strength=sharpen_strength)
+        sharpened_image = blended_image
+
+        if idx == 0: save_image(to_8bit(sharpened_image), './debug_images', f'new_gmdunsharp_{denoise_strength}_{threshold}_{blur_kernel_size}_{sharpen_strength}')
+
+        # Clip and convert back to uint16
+        sharpened_image = np.clip(sharpened_image, 0, 1) * 65535
+        sharpened_image_16bit = sharpened_image.astype(np.uint16)
+        sharpened_images.append(sharpened_image_16bit)
+
+    return sharpened_images
 
 def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02):
     sharpened_images = []
