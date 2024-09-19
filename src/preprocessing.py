@@ -209,16 +209,14 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
         # Clip per mantenere il range valido [0, 65535]
         sharpened_image = np.clip(sharpened_image, 0, 1) * 65535
 
-        if idx == 0:
-            save_image(to_8bit(sharpened_image), './debug_images', f'gmdunsharp_{strength}_{threshold}')
-            save_image(to_8bit(detail_mask), './debug_images', f'detail_mask_{strength}_{threshold}')
+        #if idx == 0:
+        #    save_image(to_8bit(sharpened_image), './debug_images', f'gmdunsharp_{strength}_{threshold}')
+        #    save_image(to_8bit(detail_mask), './debug_images', f'detail_mask_{strength}_{threshold}')
 
         # Converti di nuovo a 16-bit
         sharpened_image_16bit = sharpened_image.astype(np.uint16)
         sharpened_images.append(sharpened_image_16bit)
 
-        #if DEBUG: save_debug_image(sharpened_image_16bit, './debug_images', f'gradient_mask_unsharp_{idx}')
-    
     return sharpened_images
 
 
@@ -375,6 +373,7 @@ def preprocess_images(images, calibrate=True,
             # Applica il denoising selettivo con maschera di gradiente
             imgs = gradient_mask_denoise_unsharp(imgs, model, strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
             #imgs = new_gmdunsharp(imgs, model, denoise_strength=gradient_strength, threshold=gradient_threshold)
+            #imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
         else:
             raise ValueError(f"Invalid sharpening method: {sharpening_method}")
     

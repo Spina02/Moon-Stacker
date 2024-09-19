@@ -25,7 +25,7 @@ def composite_metric(image):
     contrast = normalize(calculate_contrast(image), 0, 255*type_factor/2)
     sharpness = normalize(calculate_sharpness(image), 0, 500*type_factor)
     
-    return (sharpness + contrast) / 2
+    return sharpness # + contrast) / 2
 
 def image_analysis(image):
     type_factor = 1 if image.dtype == np.uint8 else 255
