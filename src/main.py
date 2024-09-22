@@ -3,17 +3,21 @@ from image import *
 from preprocessing import preprocess_images
 from stacking import *
 import cv2
+from calibration import *
 
-def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'composite', stacking_alg = 'median', n_features = 10000, strengths=[1.2, 1.4, 1.6], thresholds=[0.5, 0.5, 0.5], ks=[3, 5, 7], grayscale = True, method = 'multi-scale'):
+def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'composite', stacking_alg = 'median', n_features = 10000, grayscale = True, method = 'gradient'):
     print()
     image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False, crop = True, grayscale = grayscale, unsharp = False, calibrate=False)[0]
-    save_image(image_0, 'original')
+    save_images([image_0], 'original')
 
-    preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False, calibrate = calibrate)
+    #bias, dark, flat = calculate_masters()
+    #images = calibrate_images(images, bias, dark, flat)
+
+    preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False, calibrate = False)
 
     for stacking_alg in ['weighted average', 'median', 'sigma clipping']:
         
-        unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = grayscale, unsharp = True, sharpening_method = method, calibrate = False, strengths=strengths, thresholds=thresholds, ks=ks)
+        unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = grayscale, unsharp = True, sharpening_method = method, calibrate = False)
 
         name = f'{features_alg}_{stacking_alg}' 
         # Stack the images
@@ -28,10 +32,12 @@ def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg =
         # Save the image
         print(f'\nsaving {name}')
         save_image(image, name)
-        
-        print(f'PSNR: {cv2.PSNR(image_0, image)}')
 
-def grid_search(images, features_alg='orb', average_alg='composite', n_features=10000, method='multi_scale'):
+        print(image_0.dtype, image.dtype)
+        
+        #print(f'PSNR: {cv2.PSNR(image_0, image)}')
+
+def grid_search(images, features_alg='orb', average_alg='composite', n_features=10000, method='gradient'):
     print()
     image_0 = preprocess_images([images[0]], align=False, crop=True, grayscale=True, unsharp=False, calibrate=False)[0]
     save_image(image_0, name='original')
@@ -52,47 +58,46 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
     for strengths in strengths_list:
         for thresholds in thresholds_list:
             for ks in ks_list:
-                    for gradient_strength in [1.0, 1.1, 1.25]:
-                        for gradient_threshold in [0.012, 0.0125]:
-                            for denoise_strength in [1]:
-                                # Preprocess the images with the selected sharpening method
-                                unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
-                                                              unsharp=True, strengths=strengths, thresholds=thresholds, ks=ks, 
-                                                              calibrate=False, sharpening_method=method, gradient_strength=gradient_strength,
-                                                              gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
-                                for stacking_alg in stacking_algorithms:
-                                                    # name
-                                    if method == 'multi_scale':
-                                        print(f'\nRunning {features_alg} with strengths {strengths}, thresholds {thresholds}, ks {ks} and stacking {stacking_alg}')
-                                        name = f'{features_alg}_strengths_{strengths}_ks_{ks}_thresholds_{thresholds}_stacking_{stacking_alg}'
-                                    elif method == 'gradient':
-                                        print(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold}, denoise strength {denoise_strength} and stacking {stacking_alg}')
-                                        name = f'{features_alg}_str_{gradient_strength}_thr_{gradient_threshold}_dstr_{denoise_strength}_stack_{stacking_alg}'
+                for gradient_strength in [0.9, 1.0]:
+                    for gradient_threshold in [0.009, 0.01, 0.012]:
+                        for denoise_strength in [1]:
+                            # Preprocess the images with the selected sharpening method
+                            unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
+                                                            unsharp=True, strengths=strengths, thresholds=thresholds, ks=ks, 
+                                                            calibrate=False, sharpening_method=method, gradient_strength=gradient_strength,
+                                                            gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+                            for stacking_alg in stacking_algorithms:
+                                if method == 'multi_scale':
+                                    print(f'\nRunning {features_alg} with strengths {strengths}, thresholds {thresholds}, ks {ks} and stacking {stacking_alg}')
+                                    name = f'{features_alg}_strengths_{strengths}_ks_{ks}_thresholds_{thresholds}_stacking_{stacking_alg}'
+                                elif method == 'gradient':
+                                    print(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold}, denoise strength {denoise_strength} and stacking {stacking_alg}')
+                                    name = f'{features_alg}_str_{gradient_strength}_thr_{gradient_threshold}_dstr_{denoise_strength}_stack_{stacking_alg}'
 
-                                    # Stack the images using the selected stacking algorithm
-                                    if stacking_alg == 'weighted average':
-                                        image = weighted_average_stack(unsharped, method=average_alg)
-                                    elif stacking_alg == 'median':
-                                        image = median_stack(unsharped)
-                                    elif stacking_alg == 'sigma clipping':
-                                        image = sigma_clipping(unsharped)
+                                # Stack the images using the selected stacking algorithm
+                                if stacking_alg == 'weighted average':
+                                    image = weighted_average_stack(unsharped, method=average_alg)
+                                elif stacking_alg == 'median':
+                                    image = median_stack(unsharped)
+                                elif stacking_alg == 'sigma clipping':
+                                    image = sigma_clipping(unsharped)
 
-                                    # Save the image
-                                    print(f'\nSaving {name}')
-                                    save_image(image, name, config.output_folder)
+                                # Save the image
+                                print(f'\nSaving {name}')
+                                #save_image(image, name, config.output_folder)
 
-                                    image = unsharp_mask([image], 2)[0]
+                                image = unsharp_mask([image], 2)[0]
 
-                                    save_image(image, name + '_sharp', config.output_folder)
+                                save_image(image, name + '_sharp', config.output_folder)
 
-                                    # Calcola il PSNR rispetto all'immagine originale
-                                    psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
-                                    print(f'PSNR: {psnr}')
+                                # Calcola il PSNR rispetto all'immagine originale
+                                psnr = cv2.PSNR(image_0, image)
+                                print(f'PSNR: {psnr}')
 
-                                    # Aggiorna il miglior PSNR trovato
-                                    if psnr > best_psnr:
-                                        best_psnr = psnr
-                                        best_img = name
+                                # Aggiorna il miglior PSNR trovato
+                                if psnr > best_psnr:
+                                    best_psnr = psnr
+                                    best_img = name
 
     print(f'Best PSNR: {best_psnr} at {best_img}')
 
@@ -112,7 +117,15 @@ def unsharp_mask(images, strength):
 def main():
     #grid_search(read_images(config.input_folder), method='multi_scale')
     #grid_search(read_images(config.input_folder), method='gradient')
-    save_image(image_stacking(read_images(config.input_folder), method='gradient', calibrate = True), 'stacked')
+    
+    bias, dark, flat = calculate_masters()
+    images = read_images(config.input_folder)
+    save_images(images[:1], 'original')
+    images = calibrate_images(images, bias, dark, flat)
+    save_image(images[0], 'calibrated')
+    
+    grid_search(images)
+    #save_image(image_stacking(images, method='gradient', calibrate = True), 'stacked')
 
 if __name__ == '__main__':
     main()

@@ -33,29 +33,26 @@ def calculate_master_flat(flat, master_bias = None, master_dark = None):
     master_flat /= np.mean(master_flat, axis=(0, 1))
     return master_flat.astype(np.float64)
 
-def calibrate_images(images):
-    # calculate masters
-    bias = read_images(config.bias_folder, max_img=100)
-    master_bias = calculate_maser_bias(bias)
-    del bias
+def calculate_masters(max_img = 20):
+    print('calculating bias master')
+    master_bias = calculate_maser_bias(read_images(config.bias_folder, max_img=max_img))
     gc.collect()
    
-    dark = read_images(config.dark_folder, max_img=100)
-    master_dark = calculate_master_dark(dark, master_bias)
-
-    del dark
+    print('calculating dark master')
+    master_dark = calculate_master_dark(read_images(config.dark_folder, max_img=max_img), master_bias)
     gc.collect()
     
-    flat = read_images(config.flat_folder, max_img=100)
-    master_flat = calculate_master_flat(flat, master_bias, master_dark)
-
-    del flat
+    print('calculating flat master')
+    master_flat = calculate_master_flat(read_images(config.flat_folder, max_img=max_img), master_bias, master_dark)
     gc.collect()
+
+    return master_bias, master_dark, master_flat
+
+def calibrate_images(images, master_bias, master_dark, master_flat):
 
     calibrated_images = []
     for image in images:
-        calibrated_image = image.copy()
-        calibrated_image = calibrated_image.astype(np.float64)
+        calibrated_image = image.astype(np.float64)
         if master_bias is not None:
             calibrated_image -= master_bias
         if master_dark is not None:
@@ -67,6 +64,9 @@ def calibrate_images(images):
         calibrated_images.append(calibrated_image.astype(np.float32))  # Convert back to float32
 
         if DEBUG: progress(len(calibrated_images), len(images), 'images calibrated')
+
+    del master_bias, master_dark, master_flat
+    gc.collect()
 
     print()
 
