@@ -1,6 +1,7 @@
 from config import *
 import numpy as np
 import cv2
+from image import to_8bit
 
 def calculate_contrast(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) != 2 else image
@@ -12,7 +13,7 @@ def calculate_brightness(image):
 
 def calculate_sharpness(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) != 2 else image
-    laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+    laplacian = cv2.Laplacian(to_8bit(gray), cv2.CV_64F)
     return laplacian.var()
 
 def normalize(value, min_value, max_value):

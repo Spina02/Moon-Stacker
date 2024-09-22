@@ -147,7 +147,7 @@ def align_images(images, algo='orb', nfeatures=500):
         matcher = cv2.BFMatcher.create(norm, crossCheck=True)
 
     aligned_images = [ref_image]
-    if DEBUG: progress(len(aligned_images), len(images), 'images cropped')
+    if DEBUG: progress(len(aligned_images), len(images), 'images aligned')
 
     for image in images[1:]:
         aligned_image = align_image(image, ref_kp, ref_des, ref_image, aligner, matcher)

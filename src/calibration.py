@@ -2,6 +2,8 @@ import config
 from image import read_images
 import numpy as np
 import gc
+from config import DEBUG
+from utils import progress
 
 def calculate_maser_bias(bias):
     if len(bias) < 10: 
@@ -62,6 +64,10 @@ def calibrate_images(images):
             calibrated_image /= master_flat
             
         calibrated_image = np.clip(calibrated_image, 0, np.finfo(np.float64).max)  # Clip to valid range
-        calibrated_images.append(calibrated_image.astype(np.uint16))  # Convert back to uint16
+        calibrated_images.append(calibrated_image.astype(np.float32))  # Convert back to float32
+
+        if DEBUG: progress(len(calibrated_images), len(images), 'images calibrated')
+
+    print()
 
     return calibrated_images

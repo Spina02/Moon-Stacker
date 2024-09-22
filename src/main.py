@@ -2,21 +2,23 @@ import config
 from image import *
 from preprocessing import preprocess_images
 from stacking import *
-#from denoise import model_init, perform_denoising
 import cv2
 
-def image_stacking(images, features_alg = 'orb', average_alg = 'composite', stacking_alg = 'median', n_features = 10000, strengths=[1.2, 1.4, 1.6], thresholds=[0.5, 0.5, 0.5], ks=[3, 5, 7]):
+def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'composite', stacking_alg = 'median', n_features = 10000, strengths=[1.2, 1.4, 1.6], thresholds=[0.5, 0.5, 0.5], ks=[3, 5, 7], grayscale = True, method = 'multi-scale'):
     print()
-    image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False,crop = True, grayscale = True, unsharp = False, calibrate=False)[0]
-    save_images([image_0], config.output_folder, name = 'original')
+    image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False, crop = True, grayscale = grayscale, unsharp = False, calibrate=False)[0]
+    save_image(image_0, 'original')
 
-    preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False)
+    preprocessed = preprocess_images(images, algo = 'orb', align = True, crop = True, grayscale = False, unsharp = False, calibrate = calibrate)
 
     for stacking_alg in ['weighted average', 'median', 'sigma clipping']:
-        unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = True, unsharp = True, calibrate = False, strengths=strengths, thresholds=thresholds, ks=ks)
+        
+        unsharped = preprocess_images(preprocessed, align = False, crop = False, grayscale = grayscale, unsharp = True, sharpening_method = method, calibrate = False, strengths=strengths, thresholds=thresholds, ks=ks)
 
+        name = f'{features_alg}_{stacking_alg}' 
         # Stack the images
         if stacking_alg == 'weighted average':
+            name += f'_{average_alg}'
             image = weighted_average_stack(unsharped, method=average_alg)
         elif stacking_alg == 'median':
             image = median_stack(unsharped)
@@ -24,18 +26,15 @@ def image_stacking(images, features_alg = 'orb', average_alg = 'composite', stac
             image = sigma_clipping(unsharped)
 
         # Save the image
-        name = f'/{features_alg}_{stacking_alg}' 
-        name += f'_{average_alg}' if stacking_alg == 'weighted average' else ''
         print(f'\nsaving {name}')
-        save_images([image], config.output_folder, name = name)
-        print(image_0.shape, image.shape)
-        psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
-        print(f'PSNR: {psnr}')
+        save_image(image, name)
+        
+        print(f'PSNR: {cv2.PSNR(image_0, image)}')
 
 def grid_search(images, features_alg='orb', average_alg='composite', n_features=10000, method='multi_scale'):
     print()
     image_0 = preprocess_images([images[0]], align=False, crop=True, grayscale=True, unsharp=False, calibrate=False)[0]
-    save_images([image_0], config.output_folder, name='original')
+    save_image(image_0, name='original')
 
     best_psnr = -9999
     best_img = ''
@@ -59,7 +58,8 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
                                 # Preprocess the images with the selected sharpening method
                                 unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
                                                               unsharp=True, strengths=strengths, thresholds=thresholds, ks=ks, 
-                                                              calibrate=False, sharpening_method=method, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+                                                              calibrate=False, sharpening_method=method, gradient_strength=gradient_strength,
+                                                              gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
                                 for stacking_alg in stacking_algorithms:
                                                     # name
                                     if method == 'multi_scale':
@@ -79,11 +79,11 @@ def grid_search(images, features_alg='orb', average_alg='composite', n_features=
 
                                     # Save the image
                                     print(f'\nSaving {name}')
-                                    save_image(image, config.output_folder, name)
+                                    save_image(image, name, config.output_folder)
 
                                     image = unsharp_mask([image], 2)[0]
 
-                                    save_image(image, config.output_folder, name + '_sharp')
+                                    save_image(image, name + '_sharp', config.output_folder)
 
                                     # Calcola il PSNR rispetto all'immagine originale
                                     psnr = cv2.PSNR(image_0.astype(np.float32), image.astype(np.float32))
@@ -105,13 +105,14 @@ def unsharp_mask(images, strength):
 
     merged_images = [to_16bit(cv2.addWeighted(to_16bit(image), 0.5 + strength, to_16bit(blurred_image), 0.5 -strength, 0)) for image, blurred_image in zip(images, blurred_images)]
     
-    save_images(merged_images, './images/merged', name = 'merged', clear = False)
+    #save_images(merged_images, name = 'merged', folder_path = './images/merged', clear = False)
 
     return merged_images
 
 def main():
     #grid_search(read_images(config.input_folder), method='multi_scale')
-    grid_search(read_images(config.input_folder), method='gradient')
+    #grid_search(read_images(config.input_folder), method='gradient')
+    save_image(image_stacking(read_images(config.input_folder), method='gradient', calibrate = True), 'stacked')
 
 if __name__ == '__main__':
     main()

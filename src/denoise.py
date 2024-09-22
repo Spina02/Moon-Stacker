@@ -50,10 +50,10 @@ def preprocess_image(image, max_value):
     if len(image.shape) == 3:
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     
-    if not isinstance(image, np.ndarray):
-        image = np.array(image, dtype=np.float32)
-    else:
-        image = image.astype(np.float32)
+    #if not isinstance(image, np.ndarray):
+    #    image = np.array(image, dtype=np.float32)
+    #else:
+    #    image = image.astype(np.float32)
 
     # Normalize the image between 0 and 1
     image = image / max_value
@@ -74,10 +74,12 @@ def denoise_tensor(model, image_tensor):
     with torch.no_grad():
         return model(image_tensor)
 
-def perform_denoising(model, image, device, dtype = 'np.float32'):
+def perform_denoising(model, image):
+
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     if len(image.shape) == 3:
-        lab_image = color.rgb2lab(image.astype(np.float32) / 65535.0)
+        lab_image = color.rgb2lab(image)
         channels = list(cv2.split(lab_image))
     else: 
         channels = [image]
@@ -99,12 +101,6 @@ def perform_denoising(model, image, device, dtype = 'np.float32'):
     if len(image.shape) == 3:
         denoised_image = cv2.merge(channels)
         denoised_image = color.lab2rgb(denoised_image)
-    
-    if dtype == 'np.uint16':
-        denoised_image = (denoised_image * 65535).astype(np.uint16)
-    elif dtype == 'np.uint8':
-        denoised_image = (denoised_image * 255).astype(np.uint8)
-    # else dtype == 'np.float32'
 
     # Free memory
     del l, denoised_l, channels

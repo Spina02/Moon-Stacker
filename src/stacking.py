@@ -37,28 +37,23 @@ def sigma_clipping(images, sigma=3):
     return stacked_image
 
 def calculate_weights(images, method='snr'):
-    if method == 'snr':
-        weights = [calculate_snr(image) for image in images]
-    elif method == 'contrast':
+    if method == 'contrast':
         weights = [calculate_contrast(image) for image in images]
     elif method == 'sharpness':
         weights = [calculate_sharpness(image) for image in images]
-    elif method == 'variance':
-        weights = [calculate_variance(image) for image in images]
-    elif method == 'edge_sharpness':
-        weights = [edge_sharpness(image) for image in images]
     elif method == 'composite':
         weights = [composite_metric(image) for image in images]
     else:
         raise ValueError("Unknown method for calculating weights")
     return weights
 
-def weighted_average_stack(images, method='snr'):
-    img_type = images[0].dtype
+def weighted_average_stack(imgs, method='contrast'):
+    images = imgs.copy()
+
     # Calculate the weights for each image
     weights = calculate_weights(images, method)
 
-    # Set to zero the lowest 10% of the weights
+    # Set to zero the lowest 20% of the weights
     weights = np.array(weights)
     weights[np.argsort(weights)[:len(weights)//10]] = 0
     weights = weights / np.sum(weights)
@@ -75,7 +70,7 @@ def weighted_average_stack(images, method='snr'):
             weighted_sum += channel * weight
 
         # Normalize the weighted sum to 8-bit range
-        stacked_channel = (weighted_sum / np.sum(weights)).astype(img_type)
+        stacked_channel = (weighted_sum / np.sum(weights)).astype(np.float32)
         stacked_channels.append(stacked_channel)
 
     # Combine the channels into a single image
