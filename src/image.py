@@ -36,10 +36,10 @@ def to_16bit(image):
     elif image.dtype == np.uint8:
         return (image*255).astype(np.uint16)
 
-def read_folder(folder_path):
+def read_folder(folder_path, max_img):
     folder = os.listdir(folder_path)
     # Read all image paths in the folder
-    return [os.path.join(folder_path, folder[i]) for i in range(min(MAX_IMG, len(folder)))]
+    return [os.path.join(folder_path, folder[i]) for i in range(min(max_img, len(folder)))]
 
 def read_image(file_path):
     if file_path.lower().endswith(('.raf', '.dng', '.nef', '.cr2')):
@@ -54,9 +54,9 @@ def read_image(file_path):
         image = imageio.imread(file_path, output_bps=16)
     return to_float32(image)
 
-def read_images(folder_path):
+def read_images(folder_path, max_img=MAX_IMG):
     create_folder(folder_path)
-    image_paths = read_folder(folder_path)
+    image_paths = read_folder(folder_path, max_img)
     images = []
     for path in image_paths:
         images.append(read_image(path))

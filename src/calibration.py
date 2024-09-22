@@ -35,18 +35,18 @@ def calculate_master_flat(flat, master_bias = None, master_dark = None):
 
 def calibrate_images(images):
     # calculate masters
-    bias = read_images(config.bias_folder)
+    bias = read_images(config.bias_folder, max_img=100)
     master_bias = calculate_maser_bias(bias)
     del bias
     gc.collect()
    
-    dark = read_images(config.dark_folder)
+    dark = read_images(config.dark_folder, max_img=100)
     master_dark = calculate_master_dark(dark, master_bias)
 
     del dark
     gc.collect()
     
-    flat = read_images(config.flat_folder)
+    flat = read_images(config.flat_folder, max_img=100)
     master_flat = calculate_master_flat(flat, master_bias, master_dark)
 
     del flat
