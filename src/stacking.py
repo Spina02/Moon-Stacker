@@ -41,8 +41,6 @@ def calculate_weights(images, method='snr'):
         weights = [calculate_contrast(image) for image in images]
     elif method == 'sharpness':
         weights = [calculate_sharpness(image) for image in images]
-    elif method == 'composite':
-        weights = [composite_metric(image) for image in images]
     else:
         raise ValueError("Unknown method for calculating weights")
     return weights

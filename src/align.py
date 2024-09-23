@@ -66,12 +66,8 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
         return None
     
     # Match the descriptors
-    if config.IS_MOON:
-        matches = matcher.knnMatch(ref_des, des, k=2)
-        matches = [m for m, n in matches if m.distance < 0.75 * n.distance]
-    else:
-        matches = matcher.knnMatch(ref_des, des, k=1)
-        matches = [m[0] for m in matches if len(m) == 1]
+    matches = matcher.knnMatch(ref_des, des, k=2)
+    matches = [m for m, n in matches if m.distance < 0.75 * n.distance]
 
     if len(matches) < 4:
         print(f'\nNot enough matches found: {len(matches)} matches\n')
@@ -141,10 +137,7 @@ def align_images(images, algo='orb', nfeatures=500):
         ref_kp, ref_des, aligner = surf(to_8bit(ref_image))
         norm = cv2.NORM_L2
 
-    if config.IS_MOON:
-        matcher = cv2.BFMatcher.create(norm)
-    else:
-        matcher = cv2.BFMatcher.create(norm, crossCheck=True)
+    matcher = cv2.BFMatcher.create(norm)
 
     aligned_images = [ref_image]
     if DEBUG: progress(len(aligned_images), len(images), 'images aligned')

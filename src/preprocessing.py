@@ -129,68 +129,13 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
 
     return sharpened_images
 
+def unsharp_mask(images, strength):
 
-def multi_scale_unsharp_mask_dncnn(images, model, strengths, thresholds, ks):
+    blurred_images = [cv2.GaussianBlur(image, (3, 3), 0.5) for image in images]
 
-    sharpened_images = []
+    merged_images = [to_16bit(cv2.addWeighted(to_16bit(image), 0.5 + strength, to_16bit(blurred_image), 0.5 -strength, 0)) for image, blurred_image in zip(images, blurred_images)]
 
-    for idx, image in enumerate(images):
-        normalized_image = to_float32(image)
-
-        total_details = np.zeros_like(normalized_image)
-
-        for scale_idx, (strength, threshold, k) in enumerate(zip(strengths, thresholds, ks)):
-            # Denoising con DNCNN
-
-            denoised_image = perform_denoising(model, image)
-
-            # Calcolulate the details
-            details = normalized_image - denoised_image * 65535
-
-            # Calculate the magnitude of the details
-            detail_magnitude = np.abs(details)
-
-            # Apply a threshold to the details
-            detail_threshold = np.mean(detail_magnitude) + np.std(detail_magnitude) * 1.5
-            details_filtered = np.where(detail_magnitude >= detail_threshold, details, 0)
-
-            if idx == 0: save_image(details_filtered, f'details_filtered_{idx}_scale_{scale_idx}', './debug_images')
-
-            # Normalize using the standard deviation
-            std_dev = np.std(details_filtered)
-            if std_dev > 0:
-                detail_magnitude = np.abs(details_filtered) / std_dev
-            else:
-                detail_magnitude = np.zeros_like(details_filtered)
-
-            # Apply a sigmoid function to the magnitude
-            detail_mask = 1 / (1 + np.exp(-k * (detail_magnitude - threshold)))
-
-            # apply gaussian blur to the mask
-            detail_mask = cv2.GaussianBlur(detail_mask, (5, 5), 1)
-
-            # Amplify the details
-            amplified_details = details_filtered * strength * detail_mask
-
-            # Limit the amplification
-            max_amplification = 3000  # Regola questo valore secondo necessità
-            amplified_details = np.clip(amplified_details, -max_amplification, max_amplification)
-
-            # Sum the amplified details
-            total_details += amplified_details / len(strengths)
-
-        # Add the denoised image to the sharpened image
-        sharpened_image = 0.7*image + 0.3*denoised_image + total_details
-
-        # Clip to the valid range [0, 65535]
-        sharpened_image = np.clip(sharpened_image, 0, 65535)
-
-        sharpened_images.append(sharpened_image)
-
-        if DEBUG:
-            progress(idx + 1, len(images), 'Images processed with multi-scale unsharp masking')
-
-    return sharpened_images
+    return merged_images
 
 # ------------------ Cropping ------------------
 
@@ -246,8 +191,8 @@ def crop_to_center(images, margin=10):
 def preprocess_images(images, calibrate=False,
                       align=True, algo='orb', nfeatures=10000, 
                       crop=True, margin=10,
-                      unsharp=True, strengths=[0.8, 0.9, 1], thresholds=[0.5, 0.5, 0.5], ks = [5, 5, 5],
-                      grayscale=True, sharpening_method='multi_scale', gradient_strength=1.0, gradient_threshold=0.0135, denoise_strength = 1):
+                      unsharp=True, gradient_strength=1.0, gradient_threshold=0.0135, denoise_strength=1,
+                      grayscale=True):
     imgs = images.copy()
     
     if calibrate:
@@ -260,12 +205,7 @@ def preprocess_images(images, calibrate=False,
         imgs = crop_to_center(imgs, margin=margin)
         
     if unsharp:
-        if sharpening_method == 'multi_scale':
-            imgs = multi_scale_unsharp_mask_dncnn(imgs, model_init(), strengths, thresholds, ks)
-        elif sharpening_method == 'gradient':
-            imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
-        else:
-            raise ValueError(f"Invalid sharpening method: {sharpening_method}")
+        imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
 
     if grayscale and len(imgs[0].shape) == 3:
         imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
