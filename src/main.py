@@ -77,7 +77,7 @@ def grid_search(images, features_alg='orb', average_alg='sharpness', n_features=
 
                     # Calcola il PSNR rispetto all'immagine originale
                     psnr = cv2.PSNR(to_8bit(image_0), to_8bit(image))
-                    print(evaluate_improvement(image_0, image))
+                    print(evaluate_improvement(to_8bit(image_0), to_8bit(image)))
                     print(f'PSNR: {psnr}')
 
                     # Aggiorna il miglior PSNR trovato
