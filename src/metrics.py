@@ -62,19 +62,19 @@ def evaluate_improvement(image_0, image):
     color_diff = ciede2000(image_0, image)
 
     tenengrad_0 = tenengrad(image_0)
-    tenengrad = tenengrad(image_0)
+    tenengrad = tenengrad(image)
 
     entropy_0 = entropy(image_0)
     entropy = entropy(image)
     
     improvement = {
-        'Contrast Improvement               : ': contrast - contrast_0,
-        'Brightness Improvement             : ': brightness - brightness_0,
-        'Sharpness Improvement              : ': sharpness - sharpness_0,
-        'Sharpness Improvement (Tenengrad)  : ': tenengrad - tenengrad_0,
-        'Entropy Improvement                : ': entropy - entropy_0,
-        'SSIM                               : ': ssim_value,
-        'CIEDE2000 Color Difference         : ': color_diff
+        'Contrast Improvement': contrast - contrast_0,
+        'Brightness Improvement': brightness - brightness_0,
+        'Sharpness Improvement': sharpness - sharpness_0,
+        'Sharpness Improvement (Tenengrad)': tenengrad - tenengrad_0,
+        'Entropy Improvement': entropy - entropy_0,
+        'SSIM': ssim_value,
+        'CIEDE2000 Color Difference': color_diff
     }
     
     return improvement

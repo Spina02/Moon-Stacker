@@ -120,8 +120,8 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
 
     return aligned_img
 
-def align_images(images, algo='orb', nfeatures=500):
-    #images = [equalize_histogram(image) for image in images]
+def align_images(images, algo='orb', nfeatures=10000):
+    images = [cv2.equalizeHist(to_8bit(image)) for image in images]
 
     ref_image = images[0]
 

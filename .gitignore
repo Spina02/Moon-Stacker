@@ -7,3 +7,5 @@ dncnn/
 # Ignore output files
 images/output/
 
+images/ref.TIF
+images/output.png

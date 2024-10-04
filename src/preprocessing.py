@@ -33,8 +33,9 @@ def white_balance(image):
 
     return image
 
-def enhance_contrast(image, clip_limit=0.25, tile_grid_size=(2, 2)):
-    if len(image.shape) < 3:
+def enhance_contrast(image, clip_limit=0.5, tile_grid_size=(2, 2)):
+    shape = len(image.shape)
+    if shape < 3:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     # Convert the image to LAB color space using skimage
     lab = color.rgb2lab(image)
@@ -59,9 +60,16 @@ def enhance_contrast(image, clip_limit=0.25, tile_grid_size=(2, 2)):
     enhanced_image = color.lab2rgb(lab)
 
     # Convert the image to 8-bit format for saving
-    enhanced_image = to_8bit(enhanced_image)
+    #enhanced_image = to_8bit(enhanced_image)
+
+    if shape < 3:
+        enhanced_image = cv2.cvtColor(enhanced_image, cv2.COLOR_RGB2GRAY)
 
     return enhanced_image
+
+def force_background_to_black(image, threshold_value=0.03):
+    _, corrected_image = cv2.threshold(image, threshold_value, 255, cv2.THRESH_TOZERO)
+    return corrected_image
 
 # ------------------ Unsharp Masking ------------------
 
@@ -197,6 +205,9 @@ def preprocess_images(images, calibrate=False,
     
     if calibrate:
         imgs = calibrate_images(imgs)
+
+    images = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
+    
     
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
