@@ -76,10 +76,8 @@ def save_image(image, name = 'image', folder_path = config.output_folder, out_fo
     file_path = os.path.join(folder_path, name)
 
     if out_format not in ['tiff']:
-        if DEBUG: print(f'\nCan not save in 16-bit, converting to 8-bit')
         image = to_8bit(image)
     else:
-        if DEBUG: print(f'\nconverting to 16-bit')
         image = to_16bit(image)
 
     imageio.imsave(file_path, image)

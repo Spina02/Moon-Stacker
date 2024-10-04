@@ -98,6 +98,9 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
     # Warp the original image (16 bit) using homography
     aligned_img_homography = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
+    del H, image, preprocessed_image
+    gc.collect()
+
     # Detect keypoints and descriptors again on the homography aligned image
     kp_affine, des_affine = aligner.detectAndCompute(to_8bit(aligned_img_homography), None)
 
@@ -123,7 +126,7 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
     # Warp the original image (16 bit) using affine transformation
     aligned_img = cv2.warpAffine(aligned_img_homography, M, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
-    del H, M, aligned_img_homography
+    del M, aligned_img_homography
     gc.collect()
 
     return aligned_img
@@ -154,5 +157,7 @@ def align_images(images, algo='orb', nfeatures=10000):
         if aligned_image is not None:
             aligned_images.append(aligned_image)
         if DEBUG: progress(len(aligned_images), len(images), 'images aligned')
+        del aligned_image
+        gc.collect()
 
     return aligned_images

@@ -158,10 +158,10 @@ def crop_to_center(images, margin=10):
         gray = first_image
 
     # Apply Gaussian blur to reduce noise
-    blurred = cv2.GaussianBlur(gray, (3, 3), 0.5)
+    #blurred = cv2.GaussianBlur(gray, (3, 3), 0.5)
 
     # Binary thresholding
-    _, thresh = cv2.threshold(blurred, 0.1, 1.0, cv2.THRESH_BINARY)
+    _, thresh = cv2.threshold(gray, 0.1, 1.0, cv2.THRESH_BINARY)
 
     # Find contours
     contours, _ = cv2.findContours(to_8bit(thresh), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -192,24 +192,29 @@ def crop_to_center(images, margin=10):
 
         if DEBUG: progress(len(cropped_images), len(images), 'images cropped')
 
+    del images
+    gc.collect()
+
     return cropped_images
 
 # --------------- Preprocessing ----------------
 
 def preprocess_images(images, calibrate=False,
-                      align=True, algo='orb', nfeatures=10000, 
+                      align=True, algo='orb', nfeatures=5000, 
                       crop=True, margin=10,
-                      unsharp=True, gradient_strength=1.0, gradient_threshold=0.0135, denoise_strength=1,
+                      unsharp=True, gradient_strength=1.5, gradient_threshold=0.0075, denoise_strength=0.5,
                       grayscale=True):
     imgs = images.copy()
     
     if calibrate:
         imgs = calibrate_images(imgs)
+        gc.collect()
 
     images = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
     
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
+        gc.collect()
     
     if crop:
         imgs = crop_to_center(imgs, margin=margin)
@@ -217,6 +222,7 @@ def preprocess_images(images, calibrate=False,
         
     if unsharp:
         imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
+        gc.collect()
 
     if grayscale and len(imgs[0].shape) == 3:
         imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
