@@ -48,8 +48,8 @@ def grid_search(images, features_alg='orb', average_alg='sharpness', n_features=
     stacking_algorithms = ['weighted average', 'sigma clipping', 'median']
 
     for gradient_strength in [0.5, 1.0, 1.5]:
-        for gradient_threshold in [0.005, 0.0075, 0.01, 0.0125]:
-            for denoise_strength in [0.5, 0.75, 1]:
+        for gradient_threshold in [0.0075]:#[0.005, 0.0075, 0.01, 0.0125]:
+            for denoise_strength in [0.5]:#, 0.75, 1]:
                 # Preprocess the images with the selected sharpening method
                 unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
                                                 unsharp=True,
@@ -84,6 +84,9 @@ def grid_search(images, features_alg='orb', average_alg='sharpness', n_features=
                     if psnr > best_psnr:
                         best_psnr = psnr
                         best_img = name
+
+                    del image
+                    gc.collect()
 
     print(f'Best PSNR: {best_psnr} at {best_img}')
 

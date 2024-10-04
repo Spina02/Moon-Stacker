@@ -208,12 +208,12 @@ def preprocess_images(images, calibrate=False,
 
     images = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
     
-    
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
     
     if crop:
         imgs = crop_to_center(imgs, margin=margin)
+        gc.collect()
         
     if unsharp:
         imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)

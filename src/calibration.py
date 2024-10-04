@@ -6,16 +6,22 @@ from config import DEBUG
 from utils import progress
 
 def calculate_maser_bias(bias):
-    if len(bias) < 10: 
-      print('No bias frames found')
-      return None
+    if len(bias) < 10:
+        if len(bias) == 0: 
+            print('No bias frames found')
+        else:
+            print('Not enough bias frames found')
+        return None
     master_bias = np.mean(bias, axis=0).astype(np.float64)
     return master_bias.astype(np.float64)
 
 def calculate_master_dark(dark, master_bias = None):
     if len(dark) < 10: 
-      print('No dark frames found')
-      return None
+        if len(dark) == 0:
+            print('No dark frames found')
+        else:
+            print('Not enough dark frames found')
+        return None
     master_dark = np.mean(dark, axis=0)
     if master_bias is not None:
         master_dark -= master_bias
@@ -23,8 +29,11 @@ def calculate_master_dark(dark, master_bias = None):
 
 def calculate_master_flat(flat, master_bias = None, master_dark = None):
     if len(flat) < 10:
-      print('No flat frames found')
-      return None
+        if len(flat) == 0:
+            print('No flat frames found')
+        else:
+            print('Not enough flat frames found')
+        return None
     master_flat = np.mean(flat, axis=0)
     if master_bias is not None:
         master_flat -= master_bias

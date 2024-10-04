@@ -55,11 +55,20 @@ def sift(image, nfeatures = 500):
 
     return kp, des, sift
 
+# ----------------- Preprocessing ------------------
+def preprocess(image):
+    corrected_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    _, corrected_image = cv2.threshold(corrected_image, 0.05, 255, cv2.THRESH_TOZERO)
+    corrected_image = cv2.equalizeHist(to_8bit(corrected_image))
+    return corrected_image
+
 # -------------------- Aligning --------------------
 
 def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
+
+    preprocessed_image = preprocess(image)
     # find the keypoints and descriptors with the chosen algorithm
-    kp, des = aligner.detectAndCompute(to_8bit(image), None)
+    kp, des = aligner.detectAndCompute(to_8bit(preprocessed_image), None)
 
     if des is None or ref_des is None:
         print('\nDescriptors are None.\n')
@@ -67,13 +76,12 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
     
     # Match the descriptors
     matches = matcher.knnMatch(ref_des, des, k=2)
+    # Apply ratio test to filter good matches
     matches = [m for m, n in matches if m.distance < 0.75 * n.distance]
 
     if len(matches) < 4:
         print(f'\nNot enough matches found: {len(matches)} matches\n')
         return None
-    else:
-        if DEBUG > 1: print(f'\n{len(matches)} matches found\n')
 
     # Compute the homography
     ref_pts = np.float32([ref_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
