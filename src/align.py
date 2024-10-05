@@ -96,37 +96,9 @@ def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
         return None
 
     # Warp the original image (16 bit) using homography
-    aligned_img_homography = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
+    aligned_img = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     del H, image, preprocessed_image
-    gc.collect()
-
-    # Detect keypoints and descriptors again on the homography aligned image
-    kp_affine, des_affine = aligner.detectAndCompute(to_8bit(aligned_img_homography), None)
-
-    # Match the descriptors again
-    matches_affine = matcher.match(ref_des, des_affine)
-
-    if len(matches_affine) < 4:
-        print(f'\nNot enough matches found after homography transformation: {len(matches_affine)} matches\n')
-        return aligned_img_homography  # Return the homography aligned image if affine fails
-
-    matches_affine = sorted(matches_affine, key=lambda x: x.distance)
-    ref_pts_affine = np.float32([ref_kp[m.queryIdx].pt for m in matches_affine]).reshape(-1, 1, 2)
-    img_pts_affine = np.float32([kp_affine[m.trainIdx].pt for m in matches_affine]).reshape(-1, 1, 2)
-    M, _ = cv2.estimateAffinePartial2D(img_pts_affine, ref_pts_affine)
-
-    del kp_affine, des_affine, matches_affine, ref_pts_affine, img_pts_affine
-    gc.collect()
-
-    if M is None or M.shape != (2, 3):
-        print(f'\nImage could not find a valid affine transformation after homography\n')
-        return aligned_img_homography  # Return the homography aligned image if affine fails
-
-    # Warp the original image (16 bit) using affine transformation
-    aligned_img = cv2.warpAffine(aligned_img_homography, M, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
-
-    del M, aligned_img_homography
     gc.collect()
 
     return aligned_img

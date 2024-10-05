@@ -5,3 +5,4 @@ rawpy
 torch
 scikit-image
 matplotlib
+imagecodecs

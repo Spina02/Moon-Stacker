@@ -1,4 +1,6 @@
 MAX_IMG = 100
+MAX_CALIBRATION = 30
+MIN_CALIBRATION = 10
 COLAB = False
 DEBUG = 1 # 0: no debug, 1: print debug, 2: very verbose debug
 DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-25/net.pth'
@@ -7,6 +9,7 @@ input_folder = './images/lights'
 bias_folder = './images/bias'
 dark_folder = './images/darks'
 flat_folder = './images/flats'
+masters_folder = './images/masters'
 output_folder = './images/output'
 output_format = 'png'
 

@@ -14,6 +14,8 @@ def normalize(image):
 def to_float32(image):
     if image.dtype == np.float32:
         return image
+    if image.dtype == np.float64:
+        return image.astype(np.float32)
     elif image.dtype == np.uint8:
         return (image/255.0).astype(np.float32)
     elif image.dtype == np.uint16:
@@ -24,7 +26,7 @@ def to_float32(image):
 def to_8bit(image):
     if image.dtype == np.uint8:
         return image
-    if image.dtype == np.float32:
+    if image.dtype == np.float32 or image.dtype == np.float64:
         return (image*255).astype(np.uint8)
     elif image.dtype == np.uint16:
         return (image/255).astype(np.uint8)
@@ -32,7 +34,7 @@ def to_8bit(image):
 def to_16bit(image):
     if image.dtype == np.uint16:
         return image
-    elif image.dtype == np.float32:
+    elif image.dtype == np.float32 or image.dtype == np.float64:
         return (image*65535).astype(np.uint16)
     elif image.dtype == np.uint8:
         return (image*255).astype(np.uint16)
@@ -64,7 +66,7 @@ def read_images(folder_path, max_img=MAX_IMG):
     
     return images
 
-def save_image(image, name = 'image', folder_path = config.output_folder, out_format=config.output_format.lower()):
+def save_image(image, name = 'image', folder_path = config.output_folder, out_format=config.output_format.lower(), dtype = None):
     create_folder(folder_path)
 
     if image is None:
@@ -75,25 +77,36 @@ def save_image(image, name = 'image', folder_path = config.output_folder, out_fo
 
     file_path = os.path.join(folder_path, name)
 
-    if out_format not in ['tiff']:
-        image = to_8bit(image)
-    else:
-        image = to_16bit(image)
+    if dtype == None:
+        if out_format not in ['tif','tiff']:
+            image = to_8bit(image)
+            imageio.imsave(file_path, image)
+        else:
+            image = to_16bit(image)
+            cv2.imwrite(file_path, image)
 
-    imageio.imsave(file_path, image)
+    else:
+        image = image.astype(dtype)
+        cv2.imwrite(file_path, image)
+        #imageio.imsave(file_path, image)
 
     del image
     gc.collect()
 
-def save_images(images, name=None, folder_path = config.output_folder, out_format=config.output_format, clear=True):
+def save_images(images, name=None, folder_path = config.output_folder, out_format=config.output_format, clear=True, dtype = None):
     create_folder(folder_path)
     if clear:
         for f in os.listdir(folder_path):
             os.remove(os.path.join(folder_path, f))
     for i, image in enumerate(images):
-        file_name = f'output_{i}' if name is None else f'{name}_{i}'
-        save_image(image, file_name, folder_path, out_format)
-        if DEBUG: progress(i + 1, len(images), f'images saved')
+        if image is not None:
+            # check if name is a list
+            if isinstance(name, list):
+                file_name = name[i]
+            else:
+                file_name = f'output_{i}' if name is None else f'{name}_{i}'
+            save_image(image, file_name, folder_path, out_format, dtype)
+            if DEBUG: progress(i + 1, len(images), f'images saved')
 
     del images
     gc.collect()

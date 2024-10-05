@@ -42,14 +42,14 @@ def grid_search(images):
     #best_psnr = -9999
     #best_img = ''
 
+    features_alg='orb'
+    n_features=10000
     preprocessed = preprocess_images(images, algo=features_alg, nfeatures=n_features, grayscale=False, unsharp=False)
 
     # Lista degli algoritmi di stacking
     stacking_algorithms = ['weighted average']#, 'sigma clipping', 'median']
 
     average_alg='sharpness'
-    n_features=10000
-    features_alg='orb'
     for gradient_strength in [0.5, 1.0, 1.5]:
         for gradient_threshold in [0.0075]:#[0.005, 0.0075, 0.01, 0.0125]:
             for denoise_strength in [0.5]:#, 0.75, 1]:
@@ -94,7 +94,11 @@ def grid_search(images):
     #print(f'Best PSNR: {best_psnr} at {best_img}')
 
 def main():
-    bias, dark, flat = calculate_masters()
+    bias = read_image('./images/masters/bias.tif') if os.path.exists('./images/masters/bias.tif') else None
+    dark = read_image('./images/masters/dark.tif') if os.path.exists('./images/masters/dark.tif') else None
+    flat = read_image('./images/masters/flat.tif') if os.path.exists('./images/masters/flat.tif') else None
+    bias, dark, flat = calculate_masters(bias, dark, flat)
+    
     images = read_images(config.input_folder)
     save_image(images[0], 'original')
     images = calibrate_images(images, bias, dark, flat)
