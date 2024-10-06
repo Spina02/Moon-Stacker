@@ -31,9 +31,7 @@ def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg =
         save_image(image, name)
 
         print(image_0.dtype, image.dtype)
-        
-        #print(f'PSNR: {cv2.PSNR(image_0, image)}')
-
+    
 def grid_search(images):
     print()
     image_0 = preprocess_images([images[0]], align=False, crop=True, grayscale=True, unsharp=False, calibrate=False)[0]
@@ -43,7 +41,7 @@ def grid_search(images):
     best_img = ''
 
     features_alg='orb'
-    n_features=10000
+    n_features=50000
     print(f'aligning images with {features_alg} and {n_features} features')
     preprocessed = preprocess_images(images, algo=features_alg, nfeatures=n_features, grayscale=False, unsharp=False)
 
@@ -51,9 +49,9 @@ def grid_search(images):
     stacking_algorithms = ['weighted average']#, 'sigma clipping', 'median']
 
     average_alg='brisque'#'sharpness'
-    for gradient_strength in [0.5, 1.0, 1.5]:
-        for gradient_threshold in [0.0075]:#[0.005, 0.0075, 0.01, 0.0125]:
-            for denoise_strength in [0.5]:#, 0.75, 1]:
+    for gradient_strength in [1.25, 1.5, 1.75]:
+        for gradient_threshold in [0.005, 0.0075, 0.01]:#, 0.0125]:
+            for denoise_strength in [0.5, 0.75, 1]:
                 # Preprocess the images with the selected sharpening method
                 unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
                                                 unsharp=True,
