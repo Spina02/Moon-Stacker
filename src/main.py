@@ -1,9 +1,10 @@
 import config
-from image import *
+from image import read_images, read_image, save_images, save_image
 from preprocessing import preprocess_images, unsharp_mask
-from stacking import *
+from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_brisque
-from calibration import *
+from calibration import calculate_masters, calibrate_images
+from align import enhance_contrast
 
 def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'sharpness', stacking_alg = 'median', n_features = 10000, grayscale = True):
     print()
@@ -74,6 +75,7 @@ def grid_search(images):
                     #save_image(image, name, config.output_folder)
 
                     image = unsharp_mask([image], 2)[0]
+                    image = enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))
 
                     save_image(image, name + '_sharp', config.output_folder)
 

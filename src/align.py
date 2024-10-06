@@ -6,7 +6,7 @@ from utils import progress
 from metrics import get_min_brisque
 import skimage
 
-def enhance_contrast(image, clip_limit=0.5, tile_grid_size=(2, 2)):
+def enhance_contrast(image, clip_limit=0.8, tile_grid_size=(3, 3)):
     shape = len(image.shape)
     if shape < 3:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
