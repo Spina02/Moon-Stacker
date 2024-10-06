@@ -44,6 +44,7 @@ def grid_search(images):
 
     features_alg='orb'
     n_features=10000
+    print(f'aligning images with {features_alg} and {n_features} features')
     preprocessed = preprocess_images(images, algo=features_alg, nfeatures=n_features, grayscale=False, unsharp=False)
 
     # Lista degli algoritmi di stacking

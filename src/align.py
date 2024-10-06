@@ -3,7 +3,7 @@ import numpy as np
 from image import to_8bit
 from config import DEBUG
 from utils import progress
-from metrics import get_max_sharp
+from metrics import get_min_brisque
 import skimage
 
 def enhance_contrast(image, clip_limit=0.5, tile_grid_size=(2, 2)):
@@ -48,7 +48,7 @@ def preprocess(image):
         corrected_image = image.copy()
     _, corrected_image = cv2.threshold(corrected_image, 0.05, 255, cv2.THRESH_TOZERO)
     corrected_image = enhance_contrast(corrected_image)
-    return to_8bit(corrected_image)
+    return corrected_image
 
 # -------------------- Aligning --------------------
 
@@ -58,8 +58,8 @@ def align_image(image, ref_image, aligner, matcher):
     ref_image_pre = preprocess(ref_image)
 
     # Find keypoints and descriptors for both images
-    ref_kp, ref_des = aligner.detectAndCompute(ref_image_pre, None)
-    kp, des = aligner.detectAndCompute(aligned_image, None)
+    ref_kp, ref_des = aligner.detectAndCompute(to_8bit(ref_image_pre), None)
+    kp, des = aligner.detectAndCompute(to_8bit(aligned_image), None)
 
     if des is None or ref_des is None:
         print(f'\nDescriptors are None.\n')
@@ -84,14 +84,15 @@ def align_image(image, ref_image, aligner, matcher):
     aligned_image = cv2.warpPerspective(aligned_image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     # Warp the original image using the final homography
-    aligned_image = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
+    #aligned_image = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     return aligned_image
 
 
 def align_images(images, algo='orb', nfeatures=10000):
     # Select reference image
-    ref_image = images[0]#get_max_sharp(images)
+    print("selecting the reference image")
+    ref_image = images[0]#get_min_brisque(images)
 
     # Choose the feature detection algorithm
     if algo == 'orb':
@@ -110,8 +111,8 @@ def align_images(images, algo='orb', nfeatures=10000):
     matcher = cv2.BFMatcher.create(norm)
 
     aligned_images = []
-    if DEBUG: progress(0, len(images), 'images aligned')
-
+  
+    print("starting alignment")
     # Align each image to the reference image using pyramid alignment
     for idx, image in enumerate(images):
         aligned_image = align_image(image, ref_image, aligner, matcher)
