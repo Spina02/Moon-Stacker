@@ -33,40 +33,6 @@ def white_balance(image):
 
     return image
 
-def enhance_contrast(image, clip_limit=0.5, tile_grid_size=(2, 2)):
-    shape = len(image.shape)
-    if shape < 3:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    # Convert the image to LAB color space using skimage
-    lab = color.rgb2lab(image)
-
-    # Ensure the L channel is in the correct format
-    l_channel = lab[:, :, 0]
-
-    # Normalize the L channel to the range [0, 255] for OpenCV processing
-    l_channel = cv2.normalize(l_channel, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-
-    # Apply CLAHE on the L channel
-    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
-    l_channel_equalized = clahe.apply(l_channel)
-
-    # Normalize the L channel back to the range [0, 100] for LAB color space
-    l_channel_equalized = l_channel_equalized.astype(np.float32) / 255 * 100
-
-    # Replace the L channel in the LAB image
-    lab[:, :, 0] = l_channel_equalized
-
-    # Convert the image back to RGB color space using skimage
-    enhanced_image = color.lab2rgb(lab)
-
-    # Convert the image to 8-bit format for saving
-    #enhanced_image = to_8bit(enhanced_image)
-
-    if shape < 3:
-        enhanced_image = cv2.cvtColor(enhanced_image, cv2.COLOR_RGB2GRAY)
-
-    return enhanced_image
-
 def force_background_to_black(image, threshold_value=0.03):
     _, corrected_image = cv2.threshold(image, threshold_value, 255, cv2.THRESH_TOZERO)
     return corrected_image
@@ -210,7 +176,7 @@ def preprocess_images(images, calibrate=False,
         imgs = calibrate_images(imgs)
         gc.collect()
 
-    #images = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
+    #imgs = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
     
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)

@@ -101,6 +101,8 @@ def perform_denoising(model, image):
     if len(image.shape) == 3:
         denoised_image = cv2.merge(channels)
         denoised_image = color.lab2rgb(denoised_image)
+    else:
+        denoised_image = channels[0]
 
     # Free memory
     del l, denoised_l, channels

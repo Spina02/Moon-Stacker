@@ -83,12 +83,11 @@ def save_image(image, name = 'image', folder_path = config.output_folder, out_fo
             imageio.imsave(file_path, image)
         else:
             image = to_16bit(image)
-            cv2.imwrite(file_path, image)
+            imageio.imsave(file_path, image)
 
     else:
         image = image.astype(dtype)
-        cv2.imwrite(file_path, image)
-        #imageio.imsave(file_path, image)
+        imageio.imsave(file_path, image, compression='lzw')
 
     del image
     gc.collect()
