@@ -107,7 +107,7 @@ def unsharp_mask(images, strength):
 
     blurred_images = [cv2.GaussianBlur(image, (3, 3), 0.5) for image in images]
 
-    merged_images = [to_16bit(cv2.addWeighted(to_16bit(image), 0.5 + strength, to_16bit(blurred_image), 0.5 -strength, 0)) for image, blurred_image in zip(images, blurred_images)]
+    merged_images = [cv2.addWeighted(image, 0.5 + strength, blurred_image, 0.5 -strength, 0) for image, blurred_image in zip(images, blurred_images)]
 
     return merged_images
 
@@ -174,21 +174,17 @@ def preprocess_images(images, calibrate=False,
     
     if calibrate:
         imgs = calibrate_images(imgs)
-        gc.collect()
 
     #imgs = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
     
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
-        gc.collect()
     
     if crop:
         imgs = crop_to_center(imgs, margin=margin)
-        gc.collect()
         
     if unsharp:
         imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
-        gc.collect()
 
     if grayscale and len(imgs[0].shape) == 3:
         imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]

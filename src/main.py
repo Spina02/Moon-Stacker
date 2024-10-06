@@ -52,14 +52,15 @@ def grid_search(images):
     stacking_algorithms = ['weighted average']#, 'sigma clipping', 'median']
 
     average_alg='brisque'#'sharpness'
-    for gradient_strength in [1.25, 1.5, 1.75]:
-        for gradient_threshold in [0.005, 0.0075, 0.01]:#, 0.0125]:
-            for denoise_strength in [0.5, 0.75, 1]:
+    for gradient_strength in [1.75, 2.0]:
+        for gradient_threshold in [0.0025, 0.005]:
+            for denoise_strength in [0.75, 0.8]:
                 # Preprocess the images with the selected sharpening method
                 unsharped = preprocess_images(preprocessed, align=False, crop=False, grayscale=True, 
                                                 unsharp=True,
                                                 calibrate=False, gradient_strength=gradient_strength,
                                                 gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+                save_image(unsharped[0], "unsharped")
                 for stacking_alg in stacking_algorithms:
                     print(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold}, denoise strength {denoise_strength} and stacking {stacking_alg}')
                     name = f'{features_alg}_str_{gradient_strength}_thr_{gradient_threshold}_dstr_{denoise_strength}_stack_{stacking_alg}'
@@ -76,16 +77,16 @@ def grid_search(images):
                     print(f'\nSaving {name}')
                     #save_image(image, name, config.output_folder)
 
-                    image = unsharp_mask([image], 2)[0]
-                    #image = enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))
+                    unsharped = unsharp_mask([image], 1.3)[0]
+                    enhanced = enhance_contrast(unsharped, clip_limit=0.85, tile_grid_size=(11, 11))
 
-                    save_image(image, name + '_sharp', config.output_folder)
+                    save_image(enhanced, name + '_sharp', config.output_folder)
 
-                    brisque = calculate_brisque(image)
+                    brisque = calculate_brisque(enhanced)
                     print(f'BRISQUE score: {brisque}')
 
                     # Aggiorna il miglior PSNR trovato
-                    if brisque > best_brisque:
+                    if brisque < best_brisque:
                         best_brisque = brisque
                         best_img = name
 
@@ -102,6 +103,23 @@ def main():
     images = calibrate_images(images, bias, dark, flat)
     save_image(images[0], 'calibrated')
     grid_search(images)
+
+    #gradient_strengths = [1.25, 1.3, 1.35]
+    #kernel_sizes = [(11, 11), (13, 13)]
+    #denoise_strengths = [0.84, 0.85, 0.86]
+#
+    #image = read_image('images/output/orb_str_1.75_thr_0.005_dstr_0.75_stack_weighted average.png')
+    #for strength in gradient_strengths:
+    #  for ker in kernel_sizes:
+    #    for limit in denoise_strengths:
+    #      print(f'{strength}_{ker}_{limit}')
+    #      unsharped = unsharp_mask([image], strength)[0]
+    #      enhanced = enhance_contrast(unsharped, clip_limit=limit, tile_grid_size=ker)
+    #      save_image(enhanced, f'{strength}_{ker}_{limit}', 'images/boh')
+    #      brisque = calculate_brisque(enhanced)
+    #      print(f'BRISQUE score: {brisque}')
+
+
 
 if __name__ == '__main__':
     main()

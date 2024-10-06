@@ -6,7 +6,7 @@ from utils import progress
 from metrics import get_min_brisque
 import skimage
 
-def enhance_contrast(image, clip_limit=0.8, tile_grid_size=(3, 3)):
+def enhance_contrast(image, clip_limit, tile_grid_size):
     shape = len(image.shape)
     if shape < 3:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
@@ -41,22 +41,21 @@ def enhance_contrast(image, clip_limit=0.8, tile_grid_size=(3, 3)):
     return enhanced_image
 
 # ----------------- Preprocessing ------------------
-def preprocess(image):
-    print(image.dtype)
+def enhance(image, clip_limit = 0.8, tile_grid_size = (3,3)):
     if len(image.shape) == 3:
-        corrected_image = cv2.cvtColor(image.copy(), cv2.COLOR_RGB2GRAY)
+        corrected_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     else:
         corrected_image = image.copy()
-    _, corrected_image = cv2.threshold(corrected_image, 0.1, 255, cv2.THRESH_TOZERO)
-    corrected_image = enhance_contrast(corrected_image, clip_limit=0.8, tile_grid_size=(3, 3))
+    corrected_image = enhance_contrast(corrected_image, clip_limit = clip_limit, tile_grid_size = tile_grid_size)
+    _, corrected_image = cv2.threshold(corrected_image, 0.05, 255, cv2.THRESH_TOZERO)
     return corrected_image
 
 # -------------------- Aligning --------------------
 
 def align_image(image, ref_image, aligner, matcher):
     # Initialize variables for the alignment process
-    aligned_image = preprocess(image)
-    ref_image_pre = preprocess(ref_image)
+    aligned_image = enhance(image)
+    ref_image_pre = enhance(ref_image)
 
     # Find keypoints and descriptors for both images
     ref_kp, ref_des = aligner.detectAndCompute(to_8bit(ref_image_pre), None)
@@ -80,10 +79,12 @@ def align_image(image, ref_image, aligner, matcher):
 
     if H is None or not np.linalg.det(H):
         print(f'\nInvalid homography\n')
-    aligned_image = cv2.warpPerspective(aligned_image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
+
+    # Warp the aligned image at the current level
+    #aligned_image = cv2.warpPerspective(aligned_image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     # Warp the original image using the final homography
-    #aligned_image = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
+    aligned_image = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     return aligned_image
 
