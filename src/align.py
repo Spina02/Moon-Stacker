@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from image import to_8bit
+from image import to_8bit, to_float32
 from config import DEBUG
 from utils import progress
 from metrics import get_min_brisque
@@ -36,18 +36,19 @@ def enhance_contrast(image, clip_limit=0.8, tile_grid_size=(3, 3)):
     #enhanced_image = to_8bit(enhanced_image)
 
     if shape < 3 and len(enhanced_image.shape) == 3:
-        enhanced_image = cv2.cvtColor(enhanced_image, cv2.COLOR_RGB2GRAY)
+        enhanced_image = cv2.cvtColor(to_float32(enhanced_image), cv2.COLOR_RGB2GRAY)
 
     return enhanced_image
 
 # ----------------- Preprocessing ------------------
 def preprocess(image):
+    print(image.dtype)
     if len(image.shape) == 3:
-        corrected_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        corrected_image = cv2.cvtColor(image.copy(), cv2.COLOR_RGB2GRAY)
     else:
         corrected_image = image.copy()
-    _, corrected_image = cv2.threshold(corrected_image, 0.05, 255, cv2.THRESH_TOZERO)
-    corrected_image = enhance_contrast(corrected_image)
+    _, corrected_image = cv2.threshold(corrected_image, 0.1, 255, cv2.THRESH_TOZERO)
+    corrected_image = enhance_contrast(corrected_image, clip_limit=0.8, tile_grid_size=(3, 3))
     return corrected_image
 
 # -------------------- Aligning --------------------
@@ -79,8 +80,6 @@ def align_image(image, ref_image, aligner, matcher):
 
     if H is None or not np.linalg.det(H):
         print(f'\nInvalid homography\n')
-
-    # Warp the aligned image at the current level
     aligned_image = cv2.warpPerspective(aligned_image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     # Warp the original image using the final homography

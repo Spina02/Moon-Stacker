@@ -1,10 +1,11 @@
 import config
-from image import read_images, read_image, save_images, save_image
+from image import read_images, read_image, save_images, save_image, to_16bit
 from preprocessing import preprocess_images, unsharp_mask
 from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_brisque
 from calibration import calculate_masters, calibrate_images
 from align import enhance_contrast
+import os
 
 def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'sharpness', stacking_alg = 'median', n_features = 10000, grayscale = True):
     print()
@@ -45,6 +46,7 @@ def grid_search(images):
     n_features=50000
     print(f'aligning images with {features_alg} and {n_features} features')
     preprocessed = preprocess_images(images, algo=features_alg, nfeatures=n_features, grayscale=False, unsharp=False)
+    save_image(preprocessed[0], 'aligned')
 
     # Lista degli algoritmi di stacking
     stacking_algorithms = ['weighted average']#, 'sigma clipping', 'median']
@@ -75,7 +77,7 @@ def grid_search(images):
                     #save_image(image, name, config.output_folder)
 
                     image = unsharp_mask([image], 2)[0]
-                    image = enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))
+                    #image = enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))
 
                     save_image(image, name + '_sharp', config.output_folder)
 
@@ -86,9 +88,6 @@ def grid_search(images):
                     if brisque > best_brisque:
                         best_brisque = brisque
                         best_img = name
-
-                    del image
-                    gc.collect()
 
     print(f'Best BRISQUE: {best_brisque} at {best_img}')
 
