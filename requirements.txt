@@ -4,5 +4,6 @@ imageio
 rawpy
 torch
 scikit-image
-matplotlib
+#matplotlib
 imagecodecs
+brisque

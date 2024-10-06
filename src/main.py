@@ -2,7 +2,7 @@ import config
 from image import *
 from preprocessing import preprocess_images, unsharp_mask
 from stacking import *
-import cv2
+from metrics import calculate_brisque
 from calibration import *
 
 def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'sharpness', stacking_alg = 'median', n_features = 10000, grayscale = True):
@@ -39,8 +39,8 @@ def grid_search(images):
     image_0 = preprocess_images([images[0]], align=False, crop=True, grayscale=True, unsharp=False, calibrate=False)[0]
     save_image(image_0, name='original')
 
-    #best_psnr = -9999
-    #best_img = ''
+    best_brisque = 100 # brisque is 0-100 and lower values means better images
+    best_img = ''
 
     features_alg='orb'
     n_features=10000
@@ -49,7 +49,7 @@ def grid_search(images):
     # Lista degli algoritmi di stacking
     stacking_algorithms = ['weighted average']#, 'sigma clipping', 'median']
 
-    average_alg='sharpness'
+    average_alg='brisque'#'sharpness'
     for gradient_strength in [0.5, 1.0, 1.5]:
         for gradient_threshold in [0.0075]:#[0.005, 0.0075, 0.01, 0.0125]:
             for denoise_strength in [0.5]:#, 0.75, 1]:
@@ -78,20 +78,18 @@ def grid_search(images):
 
                     save_image(image, name + '_sharp', config.output_folder)
 
-                    # Calcola il PSNR rispetto all'immagine originale
-                    #psnr = cv2.PSNR(to_8bit(image_0), to_8bit(image))
-                    #print(evaluate_improvement(to_8bit(image_0), to_8bit(image)))
-                    #print(f'PSNR: {psnr}')
+                    brisque = calculate_brisque(image)
+                    print(f'BRISQUE score: {brisque}')
 
                     # Aggiorna il miglior PSNR trovato
-                    #if psnr > best_psnr:
-                    #    best_psnr = psnr
-                    #    best_img = name
+                    if brisque > best_brisque:
+                        best_brisque = brisque
+                        best_img = name
 
                     del image
                     gc.collect()
 
-    #print(f'Best PSNR: {best_psnr} at {best_img}')
+    print(f'Best BRISQUE: {best_brisque} at {best_img}')
 
 def main():
     bias = read_image('./images/masters/bias.tif') if os.path.exists('./images/masters/bias.tif') else None

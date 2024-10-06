@@ -41,11 +41,13 @@ def calculate_weights(images, method='snr'):
         weights = [calculate_contrast(image) for image in images]
     elif method == 'sharpness':
         weights = [calculate_sharpness(image) for image in images]
+    elif method == 'brisque':
+        weights = [100 - calculate_brisque(image) for image in images]
     else:
         raise ValueError("Unknown method for calculating weights")
     return weights
 
-def weighted_average_stack(imgs, method='contrast'):
+def weighted_average_stack(imgs, method='brisque'):
     images = imgs.copy()
 
     # Calculate the weights for each image

@@ -6,6 +6,12 @@ from image import to_8bit
 from skimage.metrics import structural_similarity as ssim
 from skimage.color import deltaE_ciede2000, rgb2lab
 
+from brisque import BRISQUE
+
+def calculate_brisque(image):
+    brisque = BRISQUE()
+    return brisque.score(image)
+
 def ciede2000(image_0, image):
     lab1 = rgb2lab(cv2.cvtColor(image_0, cv2.COLOR_BGR2RGB))
     lab2 = rgb2lab(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
