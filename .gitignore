@@ -11,3 +11,5 @@ images/ref.TIF
 images/output.png
 images/masters/*.tif
 src/align_cuda.py
+src/test.py
+src/_align.py

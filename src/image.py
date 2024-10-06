@@ -40,7 +40,7 @@ def to_16bit(image):
         return (image*255).astype(np.uint16)
 
 def read_folder(folder_path, max_img):
-    folder = os.listdir(folder_path)
+    folder = sorted(os.listdir(folder_path))
     # Read all image paths in the folder
     return [os.path.join(folder_path, folder[i]) for i in range(min(max_img, len(folder)))]
 
