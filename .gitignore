@@ -10,3 +10,4 @@ images/output/
 images/ref.TIF
 images/output.png
 images/masters/*.tif
+src/align_cuda.py

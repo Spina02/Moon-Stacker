@@ -210,7 +210,7 @@ def preprocess_images(images, calibrate=False,
         imgs = calibrate_images(imgs)
         gc.collect()
 
-    images = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
+    #images = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
     
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)

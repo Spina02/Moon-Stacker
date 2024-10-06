@@ -66,9 +66,9 @@ def preprocess(image):
 
 def align_image(image, ref_kp, ref_des, ref_image, aligner, matcher):
 
-    preprocessed_image = preprocess(image)
+    #preprocessed_image = preprocess(image)
     # find the keypoints and descriptors with the chosen algorithm
-    kp, des = aligner.detectAndCompute(to_8bit(preprocessed_image), None)
+    kp, des = aligner.detectAndCompute(to_8bit(image), None)
 
     if des is None or ref_des is None:
         print('\nDescriptors are None.\n')
