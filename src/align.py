@@ -35,7 +35,7 @@ def enhance_contrast(image, clip_limit=0.8, tile_grid_size=(3, 3)):
     # Convert the image to 8-bit format for saving
     #enhanced_image = to_8bit(enhanced_image)
 
-    if shape < 3:
+    if shape < 3 and len(enhanced_image.shape) == 3:
         enhanced_image = cv2.cvtColor(enhanced_image, cv2.COLOR_RGB2GRAY)
 
     return enhanced_image

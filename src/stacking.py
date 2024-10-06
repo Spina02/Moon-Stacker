@@ -75,4 +75,4 @@ def weighted_average_stack(imgs, method='brisque'):
 
     # Combine the channels into a single image
     stacked_image = cv2.merge(stacked_channels)
-    return stacked_image
+    return stacked_image.astype(np.float32)
