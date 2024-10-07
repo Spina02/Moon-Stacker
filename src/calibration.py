@@ -111,7 +111,7 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
 
     if master_dark is None:
         print('Calculating dark master...')
-        if not os.exist(config.dark_folder):
+        if not os.path.exists(config.dark_folder):
             print('No dark folder found. Skipping dark calculation.')
             master_dark = None
         dark_images = read_images(config.dark_folder, max_img=max_img)
@@ -129,7 +129,7 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
 
     if master_flat is None:
         print('Calculating flat master...')
-        if not os.exist(config.flat_folder):
+        if not os.path.exists(config.flat_folder):
             print('No flat folder found. Skipping flat calculation.')
             master_flat = None
         flat_images = read_images(config.flat_folder, max_img=max_img)
