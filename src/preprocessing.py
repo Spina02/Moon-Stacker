@@ -48,9 +48,6 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
         denoised_image = perform_denoising(model, image)
 
         denoised_image = denoised_image * denoise_strength + image * (1 - denoise_strength)
-        
-        #if idx == 0:
-            #save_image(denoised_image, f'denoised_image_{strength}_{threshold}', './debug_images')
 
         # If the image has more than two dimensions, calculate the gradient for each channel
         if image.ndim == 3:  # Color image (e.g., RGB)
@@ -94,10 +91,6 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
 
         # Clip the image to keep the valid range [0, 1]
         sharpened_image = np.clip(sharpened_image, 0, 1)
-
-        #if idx == 0:
-            #save_image(to_8bit(sharpened_image), f'gmdunsharp_{strength}_{threshold}', './debug_images')
-            #save_image(to_8bit(detail_mask), f'detail_mask_{strength}_{threshold}', './debug_images')
 
         sharpened_images.append(sharpened_image)
 

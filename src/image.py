@@ -6,7 +6,7 @@ import config
 from config import DEBUG, MAX_IMG
 import numpy as np
 import cv2
-import gc
+import matplotlib.pyplot as plt
 
 def normalize(image):
     return cv2.normalize(image, None, 0, 1, cv2.NORM_MINMAX).astype(np.float32)
@@ -59,10 +59,6 @@ def read_images(folder_path, max_img=MAX_IMG):
     for path in image_paths:
         images.append(read_image(path))
         if DEBUG: progress(len(images), len(image_paths), f'images read')
-        gc.collect()
-
-    del image_paths
-    gc.collect()
     
     return images
 
@@ -89,9 +85,6 @@ def save_image(image, name = 'image', folder_path = config.output_folder, out_fo
         image = image.astype(dtype)
         imageio.imsave(file_path, image, compression='lzw')
 
-    del image
-    gc.collect()
-
 def save_images(images, name=None, folder_path = config.output_folder, out_format=config.output_format, clear=True, dtype = None):
     create_folder(folder_path)
     if clear:
@@ -107,5 +100,15 @@ def save_images(images, name=None, folder_path = config.output_folder, out_forma
             save_image(image, file_name, folder_path, out_format, dtype)
             if DEBUG: progress(i + 1, len(images), f'images saved')
 
-    del images
-    gc.collect()
+def display_image(image, brisque, ssim, score, title='Image with Metrics'):
+
+    plt.figure(figsize=(8, 8))
+
+    if len(image.shape) == 2:
+        plt.imshow(image, cmap='gray')
+    else:
+        plt.imshow(image)
+
+    plt.axis('off')
+    plt.title(f'{title}\nBRISQUE: {brisque:.4f} | SSIM: {ssim:.4f} | Score: {score:.4f}', fontsize=12)
+    plt.show()
