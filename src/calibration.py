@@ -93,7 +93,7 @@ def calculate_master_flat(flat, master_bias=None, master_dark=None):
 def calculate_masters(master_bias = None, master_dark = None, master_flat = None, max_img=config.MAX_CALIBRATION, save=True):
     if master_bias is None:
         print('Calculating bias master...')
-        if not os.exist(config.bias_folder):
+        if not os.path.exists(config.bias_folder):
             print('No bias folder found. Skipping bias calculation.')
             master_bias = None
         bias_images = read_images(config.bias_folder, max_img=max_img)
