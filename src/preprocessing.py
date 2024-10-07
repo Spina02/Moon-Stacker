@@ -151,9 +151,6 @@ def crop_to_center(images, margin=10):
 
         if DEBUG: progress(len(cropped_images), len(images), 'images cropped')
 
-    del images
-    gc.collect()
-
     return cropped_images
 
 # --------------- Preprocessing ----------------

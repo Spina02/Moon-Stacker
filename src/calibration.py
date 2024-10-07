@@ -93,6 +93,9 @@ def calculate_master_flat(flat, master_bias=None, master_dark=None):
 def calculate_masters(master_bias = None, master_dark = None, master_flat = None, max_img=config.MAX_CALIBRATION, save=True):
     if master_bias is None:
         print('Calculating bias master...')
+        if not os.exist(config.bias_folder):
+            print('No bias folder found. Skipping bias calculation.')
+            master_bias = None
         bias_images = read_images(config.bias_folder, max_img=max_img)
         if bias_images is None or len(bias_images) < config.MIN_CALIBRATION:
             print('Not enough bias images. Skipping bias calculation.')
@@ -108,6 +111,9 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
 
     if master_dark is None:
         print('Calculating dark master...')
+        if not os.exist(config.dark_folder):
+            print('No dark folder found. Skipping dark calculation.')
+            master_dark = None
         dark_images = read_images(config.dark_folder, max_img=max_img)
         if dark_images is None or len(dark_images) < config.MIN_CALIBRATION:
             print('Not enough dark images. Skipping dark calculation.')
@@ -123,6 +129,9 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
 
     if master_flat is None:
         print('Calculating flat master...')
+        if not os.exist(config.flat_folder):
+            print('No flat folder found. Skipping flat calculation.')
+            master_flat = None
         flat_images = read_images(config.flat_folder, max_img=max_img)
         if flat_images is None or len(flat_images) < config.MIN_CALIBRATION:
             print('Not enough flat images. Skipping flat calculation.')
