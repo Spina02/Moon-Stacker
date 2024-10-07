@@ -77,18 +77,33 @@ def grid_search(images):
                     print(f'\nSaving {name}')
                     #save_image(image, name, config.output_folder)
 
-                    unsharped = unsharp_mask([image], 1.3)[0]
-                    enhanced = enhance_contrast(unsharped, clip_limit=0.85, tile_grid_size=(11, 11))
+                    #unsharped = unsharp_mask([image], 1.3)[0]
+                    #enhanced = enhance_contrast(unsharped, clip_limit=0.85, tile_grid_size=(11, 11))
 
-                    save_image(enhanced, name + '_sharp', config.output_folder)
+                    #save_image(enhanced, name + '_sharp', config.output_folder)
 
-                    brisque = calculate_brisque(enhanced)
-                    print(f'BRISQUE score: {brisque}')
+                    #brisque = calculate_brisque(enhanced)
+                    #print(f'BRISQUE score: {brisque}')
 
-                    # Aggiorna il miglior PSNR trovato
-                    if brisque < best_brisque:
-                        best_brisque = brisque
-                        best_img = name
+                    strengths = [1.25, 1.3]
+                    kernel_sizes = [(9,9), (11, 11)]
+                    limits = [0.8, 0.85]
+                
+                    #image = read_image('images/output/orb_str_1.75_thr_0.005_dstr_0.75_stack_weighted average.png')
+                    for strength in strengths:
+                        for ker in kernel_sizes:
+                            for limit in limits:
+                                print(name + f'_{strength}_{ker}_{limit}')
+                                unsharped = unsharp_mask([image], strength)[0]
+                                enhanced = enhance_contrast(unsharped, clip_limit=limit, tile_grid_size=ker)
+                                save_image(enhanced, name + f'_{strength}_{ker}_{limit}', 'images/boh')
+                                brisque = calculate_brisque(enhanced)
+                                print(f'BRISQUE score: {brisque}')
+
+                                # Aggiorna il miglior PSNR trovato
+                                if brisque < best_brisque:
+                                    best_brisque = brisque
+                                    best_img = name + f'_{strength}_{ker}_{limit}'  
 
     print(f'Best BRISQUE: {best_brisque} at {best_img}')
 
@@ -104,20 +119,20 @@ def main():
     save_image(images[0], 'calibrated')
     grid_search(images)
 
-    #gradient_strengths = [1.25, 1.3, 1.35]
-    #kernel_sizes = [(11, 11), (13, 13)]
-    #denoise_strengths = [0.84, 0.85, 0.86]
+    strengths = [1.25, 1.3, 1.35]
+    kernel_sizes = [(11, 11), (13, 13)]
+    limits = [0.84, 0.85, 0.86]
 #
     #image = read_image('images/output/orb_str_1.75_thr_0.005_dstr_0.75_stack_weighted average.png')
-    #for strength in gradient_strengths:
-    #  for ker in kernel_sizes:
-    #    for limit in denoise_strengths:
-    #      print(f'{strength}_{ker}_{limit}')
-    #      unsharped = unsharp_mask([image], strength)[0]
-    #      enhanced = enhance_contrast(unsharped, clip_limit=limit, tile_grid_size=ker)
-    #      save_image(enhanced, f'{strength}_{ker}_{limit}', 'images/boh')
-    #      brisque = calculate_brisque(enhanced)
-    #      print(f'BRISQUE score: {brisque}')
+    for strength in strengths:
+      for ker in kernel_sizes:
+        for limit in limits:
+          print(f'{strength}_{ker}_{limit}')
+          unsharped = unsharp_mask([image], strength)[0]
+          enhanced = enhance_contrast(unsharped, clip_limit=limit, tile_grid_size=ker)
+          save_image(enhanced, f'{strength}_{ker}_{limit}', 'images/boh')
+          brisque = calculate_brisque(enhanced)
+          print(f'BRISQUE score: {brisque}')
 
 
 
