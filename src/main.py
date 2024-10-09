@@ -67,11 +67,11 @@ def process_images(images, params = best_params, aligned = None, save = True):
 
     # Stacking
     if stacking_alg == 'weighted average':
-        stacked_image = weighted_average_stack([denoised], method=average_alg)
+        stacked_image = weighted_average_stack(denoised, method=average_alg)
     elif stacking_alg == 'median':
-        stacked_image = median_stack([denoised])
+        stacked_image = median_stack(denoised)
     elif stacking_alg == 'sigma clipping':
-        stacked_image = sigma_clipping([denoised])
+        stacked_image = sigma_clipping(denoised)
     else:
         raise ValueError(f"Algoritmo di stacking sconosciuto: {stacking_alg}")
 
