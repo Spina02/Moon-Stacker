@@ -4,7 +4,6 @@ from config import DEBUG
 from utils import progress
 from image import to_8bit
 from denoise import model_init, perform_denoising
-from image import enhance_contrast
 from calibration import calibrate_images
 from align import align_images
 
