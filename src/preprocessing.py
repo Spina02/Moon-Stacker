@@ -71,13 +71,13 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
 
     return sharpened_images
 
-def unsharp_mask(images, strength):
+def unsharp_mask(image, strength):
 
-    blurred_images = [cv2.GaussianBlur(image, (3, 3), 0.5) for image in images]
+    blurred_image = cv2.GaussianBlur(image, (3, 3), 0.5)
 
-    merged_images = [cv2.addWeighted(image, 0.5 + strength, blurred_image, 0.5 -strength, 0) for image, blurred_image in zip(images, blurred_images)]
+    merged_image = cv2.addWeighted(image, 0.5 + strength, blurred_image, 0.5 -strength, 0)
 
-    return merged_images
+    return merged_image
 
 # ------------------ Cropping ------------------
 

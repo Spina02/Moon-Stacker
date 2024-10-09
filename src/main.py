@@ -2,12 +2,24 @@ import config
 from image import *
 from preprocessing import preprocess_images, unsharp_mask
 from stacking import weighted_average_stack, median_stack, sigma_clipping
-#from metrics import calculate_brisque, calculate_ssim, combined_score, get_min_brisque
+from metrics import calculate_brisque, calculate_ssim, combined_score, get_min_brisque
 from calibration import calculate_masters, calibrate_images
-#from align import enhance_contrast
+from align import enhance_contrast
 from grid_search import grid_search
 import os
 
+best_params = {
+    "gradient_strength": 1.75,
+    "gradient_threshold": 0.005,
+    "denoise_strength": 0.75,
+    "stacking_alg": "weighted average",
+    "average_alg": "brisque",
+    "strength": 1.25,
+    "ker": (11, 11),
+    "limit": 0.75
+}
+
+"""
 def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg = 'sharpness', stacking_alg = 'median', n_features = 10000, grayscale = True):
     print()
     image_0 = preprocess_images([images[0]], nfeatures=n_features, align=False, crop = True, grayscale = grayscale, unsharp = False, calibrate=False)[0]
@@ -34,6 +46,57 @@ def image_stacking(images, features_alg = 'orb', calibrate = True, average_alg =
         save_image(image, name)
 
         print(image_0.dtype, image.dtype)
+"""
+        
+def process_images(images, params = best_params, aligned = None, save = True):
+
+    # Estrai i parametri dal dizionario
+    gradient_strength = params.get('gradient_strength', 1.5)
+    gradient_threshold = params.get('gradient_threshold', 0.005)
+    denoise_strength = params.get('denoise_strength', 0.75)
+    stacking_alg = params.get('stacking_alg', 'weighted average')
+    average_alg = params.get('average_alg', 'brisque')
+    unsharp_strength = params.get('strength', 1.25)
+    kernel_size = params.get('ker', (11, 11))
+    clip_limit = params.get('limit', 0.75)
+
+    if aligned is None:
+        aligned = preprocess_images(images, algo = 'orb', grayscale = False, unsharp = False)
+    
+    denoised = preprocess_images(aligned, align=False, crop=False, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+
+    # Stacking
+    if stacking_alg == 'weighted average':
+        stacked_image = weighted_average_stack([denoised], method=average_alg)
+    elif stacking_alg == 'median':
+        stacked_image = median_stack([denoised])
+    elif stacking_alg == 'sigma clipping':
+        stacked_image = sigma_clipping([denoised])
+    else:
+        raise ValueError(f"Algoritmo di stacking sconosciuto: {stacking_alg}")
+
+    # Enhancing: applica unsharp mask e enhancement del contrasto
+    enhanced_image = unsharp_mask(stacked_image, unsharp_strength)
+    contrasted_image = enhance_contrast(enhanced_image, clip_limit=clip_limit, tile_grid_size=kernel_size)
+
+    ref = get_min_brisque(aligned)
+    # Calcola le metriche
+    brisque_score = calculate_brisque(contrasted_image)
+    ssim_score = calculate_ssim(ref, contrasted_image)
+    score = combined_score(brisque_score, ssim_score)
+
+    # Salva l'immagine elaborata se richiesto
+    if save:
+        new_name = f"processed_str{gradient_strength}_thr{gradient_threshold}_dstr{denoise_strength}_ush{unsharp_strength}_ker{kernel_size}_clip{clip_limit}_avg{average_alg}"
+        save_image(contrasted_image, new_name, config.output_folder)
+
+    # Ritorna le metriche e l'immagine elaborata
+    return {
+        'BRISQUE Score': brisque_score,
+        'SSIM Score': ssim_score,
+        'Combined Score': score,
+        'Processed Image': contrasted_image
+    }
 
 """ 
 def grid_search(images, save = False):
@@ -134,14 +197,13 @@ def main():
     bias = read_image('./images/masters/bias.tif') if os.path.exists('./images/masters/bias.tif') else None
     dark = read_image('./images/masters/dark.tif') if os.path.exists('./images/masters/dark.tif') else None
     flat = read_image('./images/masters/flat.tif') if os.path.exists('./images/masters/flat.tif') else None
-
     bias, dark, flat = calculate_masters(bias, dark, flat)
     
     images = read_images(config.input_folder)
-    #save_image(images[0], 'original')
     images = calibrate_images(images, bias, dark, flat)
-    #save_image(images[0], 'calibrated')
-    grid_search(images)
+
+    params, aligned = grid_search(images)
+    process_images(None, params = params, aligned = aligned)
 
 if __name__ == '__main__':
     main()

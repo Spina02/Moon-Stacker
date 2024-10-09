@@ -77,9 +77,9 @@ def grid_search(images, save=False):
             gradient_strength=gradient_strength,
             gradient_threshold=gradient_threshold, 
             denoise_strength=denoise_strength
-        )[0]
+        )
         if save:
-            save_image(denoised, "denoised")
+            save_image(denoised[0], "denoised")
 
         for stacking_alg in stacking_algorithms:
             for average_alg in average_algs:
@@ -103,7 +103,7 @@ def grid_search(images, save=False):
                     print(f'Enhancing image with unsharp strength {strength}, kernel size {ker}, clip limit {limit}')
                     
                     # Apply unsharp mask and enhance contrast
-                    enhanced_image = unsharp_mask([image], strength)[0]
+                    enhanced_image = unsharp_mask(image, strength)
                     contrasted_image = enhance_contrast(enhanced_image, clip_limit=limit, tile_grid_size=ker)
 
                     if save:

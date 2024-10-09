@@ -42,7 +42,7 @@ def calculate_weights(images, method='snr'):
     elif method == 'sharpness':
         weights = [calculate_sharpness(image) for image in images]
     elif method == 'brisque':
-        weights = [100 - calculate_brisque(image) for image in images]
+        weights = [1 - normalize(calculate_brisque(image), 0, 100) for image in images]
     else:
         raise ValueError("Unknown method for calculating weights")
     return weights
@@ -53,7 +53,7 @@ def weighted_average_stack(imgs, method='brisque'):
     # Calculate the weights for each image
     weights = calculate_weights(images, method)
 
-    # Set to zero the lowest 20% of the weights
+    # Set to zero the lowest 10% of the weights
     weights = np.array(weights)
     weights[np.argsort(weights)[:len(weights)//10]] = 0
     weights = weights / np.sum(weights)
