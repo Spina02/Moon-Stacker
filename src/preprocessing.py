@@ -4,7 +4,7 @@ from config import DEBUG
 from utils import progress
 from image import to_8bit
 from denoise import model_init, perform_denoising
-from image import *
+from image import enhance_contrast
 from calibration import calibrate_images
 from align import align_images
 
@@ -14,7 +14,7 @@ def force_background_to_black(image, threshold_value=0.03):
 
 # ------------------ Unsharp Masking ------------------
 
-def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, denoise_strength = 0.7):
+def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, denoise_strength = 0.7, blur = False):
     sharpened_images = []
 
     for idx, image in enumerate(images):
@@ -53,7 +53,7 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
         final_image = (denoised_image * denoise_mask) + (image * (1 - denoise_mask))
 
         # Slightly blur the mask using GaussianBlur
-        #denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
+        if blur: denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
 
         # Apply a slight unsharp mask in areas with high gradient
         detail_mask = 1 - denoise_mask  # Inverse mask for areas with details
@@ -73,9 +73,9 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
 
 def unsharp_mask(image, strength):
 
-    #blurred_image = cv2.GaussianBlur(image, (3, 3), 0.5)
+    blurred_image = cv2.GaussianBlur(image, (3, 3), 0.5)
 
-    merged_image = cv2.addWeighted(image, 0.5 + strength, image, 0.5 -strength, 0)
+    merged_image = cv2.addWeighted(image, 0.5 + strength, blurred_image, 0.5 -strength, 0)
 
     return merged_image
 
@@ -90,9 +90,6 @@ def crop_to_center(images, margin=10):
         gray = cv2.cvtColor(first_image, cv2.COLOR_RGB2GRAY)
     else:
         gray = first_image
-
-    # Apply Gaussian blur to reduce noise
-    #blurred = cv2.GaussianBlur(gray, (3, 3), 0.5)
 
     # Binary thresholding
     _, thresh = cv2.threshold(gray, 0.1, 1.0, cv2.THRESH_BINARY)
@@ -134,14 +131,12 @@ def preprocess_images(images, calibrate=False,
                       align=True, algo='orb', nfeatures=5000, 
                       crop=True, margin=10,
                       unsharp=True, gradient_strength=1.5, gradient_threshold=0.0075, denoise_strength=0.5,
-                      grayscale=True):
+                      grayscale=True, blur = False):
     imgs = images.copy()
     
     if calibrate:
         imgs = calibrate_images(imgs)
 
-    #imgs = [force_background_to_black(enhance_contrast(image, clip_limit=1, tile_grid_size=(9, 9))) for image in imgs]
-    
     if align:
         imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
     
@@ -149,7 +144,7 @@ def preprocess_images(images, calibrate=False,
         imgs = crop_to_center(imgs, margin=margin)
         
     if unsharp:
-        imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
+        imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength, blur = blur)
 
     if grayscale and len(imgs[0].shape) == 3:
         imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
