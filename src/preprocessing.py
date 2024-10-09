@@ -73,9 +73,9 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
 
 def unsharp_mask(image, strength):
 
-    blurred_image = cv2.GaussianBlur(image, (3, 3), 0.5)
+    #blurred_image = cv2.GaussianBlur(image, (3, 3), 0.5)
 
-    merged_image = cv2.addWeighted(image, 0.5 + strength, blurred_image, 0.5 -strength, 0)
+    merged_image = cv2.addWeighted(image, 0.5 + strength, image, 0.5 -strength, 0)
 
     return merged_image
 

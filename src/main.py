@@ -9,14 +9,14 @@ from grid_search import grid_search
 import os
 
 best_params = {
-    "gradient_strength": 1.75,
+    "gradient_strength": 1.8,
     "gradient_threshold": 0.005,
     "denoise_strength": 0.75,
     "stacking_alg": "weighted average",
-    "average_alg": "brisque",
+    "average_alg": "sharpness",
     "strength": 1.25,
     "ker": (11, 11),
-    "limit": 0.75
+    "limit": 0.7
 }
 
 """

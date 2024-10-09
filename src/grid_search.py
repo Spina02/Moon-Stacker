@@ -51,14 +51,14 @@ def grid_search(images, save=False):
     display_image(image_0, brisque, ssim, score, 'original')
 
     # Grid search parameters
-    stacking_algorithms = ['weighted average']  #, 'sigma clipping', 'median']
+    stacking_algorithms = ['weighted average', "sigma clipping", "median"]
     average_algs = ['brisque', 'sharpness']
-    gradient_strengths = [1.75, 1.8]
-    gradient_thresholds = [0.005, 0.006]
+    gradient_strengths = [1.8, 1.85]
+    gradient_thresholds = [0.005, 0.0075]
     denoise_strengths = [0.75, 0.8]
-    unsharp_strengths = [1.2, 1.25]
-    kernel_sizes = [(11, 11), (13, 13)]
-    clip_limits = [0.7, 0.75]
+    unsharp_strengths = [1.2, 1.25, 1.3]
+    kernel_sizes = [(9, 9), (11, 11)]
+    clip_limits = [0.65, 0.7]
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
@@ -138,4 +138,4 @@ def grid_search(images, save=False):
                         }
 
     print(f'Best score: {best_score} at {best_img}')
-    return best_params
+    return best_params, aligned
