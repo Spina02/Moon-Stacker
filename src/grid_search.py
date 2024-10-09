@@ -88,11 +88,11 @@ def grid_search(images, save=False):
 
                 # Stack the images using the selected stacking algorithm
                 if stacking_alg == 'weighted average':
-                    image = weighted_average_stack([denoised], method=average_alg)
+                    image = weighted_average_stack(denoised, method=average_alg)
                 elif stacking_alg == 'median':
-                    image = median_stack([denoised])
+                    image = median_stack(denoised)
                 elif stacking_alg == 'sigma clipping':
-                    image = sigma_clipping([denoised])
+                    image = sigma_clipping(denoised)
 
                 for strength, ker, limit in itertools.product(
                     unsharp_strengths, 
