@@ -4,6 +4,8 @@ src/__pycache__/
 dncnn/
 # Ignore history files
 .history/
+# Ignore vsc files
+.venv/
 # Ignore output files
 images/output/
 

@@ -7,31 +7,6 @@ from denoise import model_init, perform_denoising
 from image import *
 from calibration import calibrate_images
 from align import align_images
-from skimage import color
-
-# ------------------ Filters ------------------
-
-def white_balance(image):
-    # Convert the image to float32 for precision
-    image = image.astype(np.float32)
-
-    # Calculate the average of each channel
-    avg_b = np.mean(image[:, :, 0])
-    avg_g = np.mean(image[:, :, 1])
-    avg_r = np.mean(image[:, :, 2])
-
-    # Calculate the overall average
-    avg_gray = (avg_b + avg_g + avg_r) / 3
-
-    # Scale each channel to match the overall average
-    image[:, :, 0] = image[:, :, 0] * (avg_gray / avg_b)
-    image[:, :, 1] = image[:, :, 1] * (avg_gray / avg_g)
-    image[:, :, 2] = image[:, :, 2] * (avg_gray / avg_r)
-
-    # Clip the values to the valid range [0, 255] and convert back to uint16
-    image = to_16bit(image)
-
-    return image
 
 def force_background_to_black(image, threshold_value=0.03):
     _, corrected_image = cv2.threshold(image, threshold_value, 255, cv2.THRESH_TOZERO)
