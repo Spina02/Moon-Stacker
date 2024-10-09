@@ -10,8 +10,8 @@ from brisque import BRISQUE
 def calculate_brisque(image):
     brisque = BRISQUE()
     if len(image.shape) < 3:
-        return brisque.score(cv2.cvtColor(to_16bit(image), cv2.COLOR_GRAY2RGB))
-    return brisque.score(to_16bit(image))
+        return brisque.score(cv2.cvtColor(to_8bit(image), cv2.COLOR_GRAY2RGB))
+    return brisque.score(to_8bit(image))
 
 def get_min_brisque(images):
     return min(images, key=calculate_brisque)
@@ -19,7 +19,7 @@ def get_min_brisque(images):
 def calculate_ssim(image_ref, image):
     ref = cv2.cvtColor(image_ref, cv2.COLOR_BGR2GRAY) if len(image_ref.shape) == 3 else image_ref
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-    ssim_value, _ = ssim(to_16bit(ref), to_16bit(img), full=True)
+    ssim_value, _ = ssim(to_16bit(ref), to_16bit(img), full=True, data_range=65535)
     return ssim_value
 
 def combined_score(brisque, ssim, alpha = 0.7, beta = 0.3):
@@ -44,7 +44,7 @@ def calculate_sharpness(image):
     return laplacian.var()
 
 def normalize(value, min_value, max_value):
-    normalized = (value - min_value) / (max_value - min_value) *10
+    normalized = (value - min_value) / (max_value - min_value)
     normalized = np.clip(normalized, min_value, max_value)
     return normalized
 

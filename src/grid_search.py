@@ -1,5 +1,4 @@
 import itertools
-import logging
 import config
 from image import save_image, display_image
 from align import enhance_contrast
@@ -9,9 +8,7 @@ from metrics import calculate_brisque, calculate_ssim, combined_score, get_min_b
 
 
 def grid_search(images, save=False):
-    # logging configuration
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info("Inizio grid search")
+    print("Inizio grid search")
 
     # Preprocess original image
     image_0 = preprocess_images(
@@ -31,7 +28,7 @@ def grid_search(images, save=False):
 
     features_alg = 'orb'
     n_features = 50000
-    logging.info(f'Allineamento immagini con {features_alg} e {n_features} features')
+    print(f'Allineamento immagini con {features_alg} e {n_features} features')
     
     # Aligning images with default ORB and 50000 features
     aligned = preprocess_images(
@@ -86,7 +83,7 @@ def grid_search(images, save=False):
 
         for stacking_alg in stacking_algorithms:
             for average_alg in average_algs:
-                logging.info(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold}, denoise strength {denoise_strength} and stacking {stacking_alg} (avg = {average_alg})')
+                print(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold}, denoise strength {denoise_strength} and stacking {stacking_alg} (avg = {average_alg})')
                 name = f'{features_alg}_str{gradient_strength}_thr{gradient_threshold}_dstr{denoise_strength}'
 
                 # Stack the images using the selected stacking algorithm
@@ -96,9 +93,6 @@ def grid_search(images, save=False):
                     image = median_stack([denoised])
                 elif stacking_alg == 'sigma clipping':
                     image = sigma_clipping([denoised])
-                else:
-                    logging.warning(f"Algoritmo di stacking sconosciuto: {stacking_alg}")
-                    continue
 
                 for strength, ker, limit in itertools.product(
                     unsharp_strengths, 
@@ -106,23 +100,23 @@ def grid_search(images, save=False):
                     clip_limits
                 ):
                     new_name = f"{name}_ush{strength}_ker{ker}_clip{limit}_avg{average_alg}"
-                    logging.info(f'Enhancing image with unsharp strength {strength}, kernel size {ker}, clip limit {limit}')
+                    print(f'Enhancing image with unsharp strength {strength}, kernel size {ker}, clip limit {limit}')
                     
                     # Apply unsharp mask and enhance contrast
                     enhanced_image = unsharp_mask([image], strength)[0]
                     contrasted_image = enhance_contrast(enhanced_image, clip_limit=limit, tile_grid_size=ker)
 
                     if save:
-                        logging.info(f'Saving {new_name}')
+                        print(f'Saving {new_name}')
                         save_image(contrasted_image, new_name, 'images/output')
 
                     # Calculate BRISQUE and SSIM scores
                     brisque = calculate_brisque(contrasted_image)
                     ssim = calculate_ssim(ref, contrasted_image)
                     score = combined_score(brisque, ssim)
-                    logging.info(f'BRISQUE score: {brisque:.2f}')
-                    logging.info(f'SSIM score: {ssim:.2f}')
-                    logging.info(f'Combined Score: {score:.2f}')
+                    print(f'BRISQUE score: {brisque:.2f}')
+                    print(f'SSIM score: {ssim:.2f}')
+                    print(f'Combined Score: {score:.2f}')
 
                     # Visualize the image if running on Google Colab
                     if config.COLAB:
@@ -143,5 +137,5 @@ def grid_search(images, save=False):
                             "limit": limit
                         }
 
-    logging.info(f'Best score: {best_score} at {best_img}')
+    print(f'Best score: {best_score} at {best_img}')
     return best_params
