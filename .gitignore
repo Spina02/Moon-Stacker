@@ -8,10 +8,13 @@ dncnn/
 .venv/
 # Ignore output files
 images/output/
-
-images/ref.TIF
-images/output.png
-images/masters/*.tif
-src/align_cuda.py
+# Ignore test files
 src/test.py
+
+# Ignore masters and other debug images
+images/*.png
+images/masters
+
+# Other files
+src/align_cuda.py
 src/_align.py

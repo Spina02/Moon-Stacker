@@ -14,7 +14,13 @@ def calculate_brisque(image):
     return brisque.score(to_8bit(image))
 
 def get_min_brisque(images):
-    return min(images, key=calculate_brisque)
+    min_score = float('inf')
+    for image in images:
+        score = calculate_brisque(image)
+        if score < min_score:
+            min_score = score
+            min_image = image
+    return min_image, min_score
 
 def calculate_ssim(image_ref, image):
     ref = cv2.cvtColor(image_ref, cv2.COLOR_BGR2GRAY) if len(image_ref.shape) == 3 else image_ref

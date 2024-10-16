@@ -4,7 +4,6 @@ import torchvision.transforms as transforms
 import numpy as np
 from image import *
 import cv2
-import gc
 from utils import progress
 from skimage import color
 from config import DNCNN_MODEL_PATH
@@ -41,27 +40,16 @@ def model_init(model_path = DNCNN_MODEL_PATH):
     model.load_state_dict(new_state_dict)
     model.eval()
 
-    del state_dict, new_state_dict
-    gc.collect()
-
     return model
 
 def preprocess_image(image, max_value):
     if len(image.shape) == 3:
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    
-    #if not isinstance(image, np.ndarray):
-    #    image = np.array(image, dtype=np.float32)
-    #else:
-    #    image = image.astype(np.float32)
 
     # Normalize the image between 0 and 1
     image = image / max_value
-    transform = transforms.ToTensor()
+    transform = transforms.Toc()
     image = transform(image).unsqueeze(0)
-
-    del transform
-    gc.collect()
     return image
 
 def postprocess_image(image, max_value):
@@ -93,8 +81,7 @@ def perform_denoising(model, image):
     with torch.no_grad():
         denoised_l = model(l).cpu()
 
-    # Postprocess the image
-    #channels[i] = postprocess_image(denoised_channel)
+    # Postprocess the l channel
     channels[0] = postprocess_image(denoised_l, 100)
 
     # Merge the channels
@@ -105,9 +92,7 @@ def perform_denoising(model, image):
         denoised_image = channels[0]
 
     # Free memory
-    del l, denoised_l, channels
     torch.cuda.empty_cache()
-    gc.collect()
 
     return denoised_image
 
@@ -115,7 +100,6 @@ def dncnn_images(model, images):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     torch.cuda.empty_cache()
-    gc.collect()
 
     denoised_images = []
     for image in images:
@@ -124,7 +108,6 @@ def dncnn_images(model, images):
 
         # Free memory
         torch.cuda.empty_cache()
-        gc.collect()
 
         progress(len(denoised_images), len(images), 'images denoised')
 

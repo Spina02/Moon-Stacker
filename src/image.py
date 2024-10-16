@@ -100,7 +100,7 @@ def save_images(images, name=None, folder_path = config.output_folder, out_forma
             save_image(image, file_name, folder_path, out_format, dtype)
             if DEBUG: progress(i + 1, len(images), f'images saved')
 
-def display_image(image, brisque, ssim, score, title='Image with Metrics'):
+def display_image(image, brisque, ssim = None, score = None, name='Image with Metrics'):
 
     plt.figure(figsize=(8, 8))
 
@@ -109,6 +109,18 @@ def display_image(image, brisque, ssim, score, title='Image with Metrics'):
     else:
         plt.imshow(image)
 
+    title = f'{name}\nBRISQUE: {brisque:.4f}'
+    if ssim is not None:
+        title +=  f"| SSIM: {ssim:.4f} | Score: {score:.4f}"
+
     plt.axis('off')
-    plt.title(f'{title}\nBRISQUE: {brisque:.4f} | SSIM: {ssim:.4f} | Score: {score:.4f}', fontsize=12)
+    plt.title(title, fontsize=12)
     plt.show()
+
+def print_score(brisque, ssim = None, score = None, name = "Image"):
+    string = f"image {name}:\n\tbrisque: {brisque}"
+    if ssim is not None:
+        string += "\n\tssim : {ssim}"
+    if score is not None:
+        string += "\n\tscore : {score}"
+    print(string)

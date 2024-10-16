@@ -1,8 +1,8 @@
-MAX_IMG = 100
-MAX_CALIBRATION = 30
-MIN_CALIBRATION = 10
+MAX_IMG = 5
+MAX_CALIBRATION = 5
+MIN_CALIBRATION = 1
 COLAB = False
-DEBUG = 1 # 0: no debug, 1: print debug, 2: very verbose debug
+DEBUG = True
 DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-25/net.pth'
 
 input_folder = './images/lights'
