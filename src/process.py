@@ -18,7 +18,7 @@ best_params = {
     "gradient_threshold": 0.005,
     "denoise_strength": 0.75,
     "stacking_alg": "weighted average",
-    "average_alg": "sharpness",
+    "average_alg": "brisque",
     "strength": 1.25,
     "ker": (11, 11),
     "limit": 0.7
@@ -57,7 +57,7 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
     matcher = cv2.BFMatcher.create(norm)
 
     if DEBUG: print("selecting the reference image")
-    ref_image = get_min_brisque(images)
+    ref_image, _ = get_min_brisque(images)
     aligned_images = [ref_image]
   
     if DEBUG: print("starting alignment")

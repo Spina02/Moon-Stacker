@@ -7,7 +7,7 @@ from grid_search import grid_search
 import os
 from process import process_images
 
-metrics = ['niqe', 'piqe', 'liqe']#, 'nima', 'brisque_matlab']
+metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
     
 def main():
     bias = read_image('images/masters/bias.tif') if os.path.exists('images/masters/bias.tif') else None

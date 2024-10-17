@@ -1,10 +1,10 @@
 import itertools
 import config
-from image import save_image, display_image, print_score
-from align import enhance_contrast
-from preprocessing import preprocess_images, unsharp_mask
+from image import save_image, display_image
+from align import enhance_contrast, align_images, dncnn_unsharp_mask
+from preprocessing import unsharp_mask
 from stacking import weighted_average_stack, median_stack, sigma_clipping
-from metrics import get_min_brisque, calculate_metrics
+from metrics import calculate_metrics
 
 def grid_search(images, save=False):
     print("Starting grid search")
@@ -19,14 +19,7 @@ def grid_search(images, save=False):
     n_features = 10000
     print(f'Aligning images with {features_alg} using {n_features} features')
     
-    # Aligning images with default ORB and 50000 features
-    aligned = preprocess_images(
-        images, 
-        algo=features_alg, 
-        nfeatures=n_features, 
-        grayscale=False, 
-        unsharp=False
-    )
+    aligned = align_images(images, algo=features_alg, nfeatures=n_features)
 
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
@@ -46,17 +39,8 @@ def grid_search(images, save=False):
         denoise_strengths
     ):
         # Preprocess the images
-        denoised = preprocess_images(
-            aligned, 
-            align=False, 
-            crop=False, 
-            grayscale=True, 
-            unsharp=True,
-            calibrate=False, 
-            gradient_strength=gradient_strength,
-            gradient_threshold=gradient_threshold, 
-            denoise_strength=denoise_strength,
-        )
+        denoised = dncnn_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+
         if save:
             save_image(denoised[0], "denoised")
 
