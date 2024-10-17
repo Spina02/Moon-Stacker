@@ -2,7 +2,7 @@ import config
 from image import *
 from preprocessing import preprocess_images, unsharp_mask, crop_to_center
 from stacking import weighted_average_stack, median_stack, sigma_clipping
-from metrics import calculate_brisque, calculate_ssim, combined_score, get_min_brisque
+from metrics import calculate_brisque, calculate_ssim, combined_score, get_min_brisque, calculate_metric
 from calibration import calculate_masters, calibrate_images
 from align import enhance_contrast
 from grid_search import grid_search
@@ -18,6 +18,8 @@ best_params = {
     "ker": (11, 11),
     "limit": 0.7
 }
+
+metrics = ['niqe', 'piqe', 'liqe']#, 'nima', 'brisque_matlab']
         
 def process_images(images, params = best_params, aligned = None, save = True):
     gradient_strength = params.get('gradient_strength', 1.5)
@@ -78,18 +80,24 @@ def main():
 
     image_0 = crop_to_center([images[0]])[0]
     if config.COLAB:
-        display_image(image_0, calculate_brisque(image_0), name = 'image 0')
-    else:
-        print_score(calculate_brisque(image_0), name = 'image 0')
+        for metric in metrics:
+            metric_score = calculate_metric(image_0, metric)
+            print(f'{metric} score: {metric_score:.4f}')
+
+            # Visualize the image if running on Google Colab
+            display_image(image_0, metric_score, metric, "image 0")
 
     images = calibrate_images(images, bias, dark, flat)
 
     calibrated_0 = crop_to_center([images[0]])[0]
 
     if config.COLAB:
-        display_image(calibrated_0, calculate_brisque(calibrated_0), name = 'calibrated')
-    else:
-        print_score(calculate_brisque(calibrated_0), name = 'calibrated')
+        for metric in metrics:
+            metric_score = calculate_metric(calibrated_0, metric)
+            print(f'{metric} score: {metric_score:.4f}')
+
+            # Visualize the image if running on Google Colab
+            display_image(calibrated_0, metric_score, metric, "calibrated")
 
     params, aligned = grid_search(images)
     process_images(None, params = params, aligned = aligned)

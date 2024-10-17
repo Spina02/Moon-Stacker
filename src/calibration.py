@@ -59,7 +59,7 @@ def calculate_master_flat(flat, master_bias=None, master_dark=None):
         return None
     print("Master flat calculated successfully.")
 
-def calculate_masters(master_bias = None, master_dark = None, master_flat = None, max_img=config.MAX_CALIBRATION, save=True):
+def calculate_masters(master_bias = None, master_dark = None, master_flat = None, max_img=config.MAX_CALIBRATION):
     if master_bias is None:
         print('Calculating bias master...')
         if not os.path.exists(config.bias_folder):

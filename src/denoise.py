@@ -48,7 +48,8 @@ def preprocess_image(image, max_value):
 
     # Normalize the image between 0 and 1
     image = image / max_value
-    transform = transforms.Toc()
+    #transform = transforms.Toc()
+    transform = transforms.ToTensor()
     image = transform(image).unsqueeze(0)
     return image
 

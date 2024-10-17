@@ -1,17 +1,44 @@
 from config import *
 import numpy as np
 import cv2
+import pyiqa
+import torch
 from image import to_8bit, to_16bit
-
+#from brisque import BRISQUE
 from skimage.metrics import structural_similarity as ssim
 
-from brisque import BRISQUE
+def calculate_metric(image, metric):
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    iqa_metric = pyiqa.create_metric(metric, device = device)
+
+    if len(image.shape) < 3:
+        img = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        img_tensor = torch.tensor(np.transpose(img, (2, 0, 1)))
+    else:
+      img_tensor = torch.tensor(np.transpose(image, (2, 0, 1)))
+    img_tensor = img_tensor.unsqueeze(0)
+    score_fr = iqa_metric(img_tensor)
+    score_fr = score_fr.item() if torch.is_tensor(score_fr) else score_fr
+    return score_fr
 
 def calculate_brisque(image):
-    brisque = BRISQUE()
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    iqa_metric = pyiqa.create_metric('brisque_matlab', device = device)
+
     if len(image.shape) < 3:
-        return brisque.score(cv2.cvtColor(to_8bit(image), cv2.COLOR_GRAY2RGB))
-    return brisque.score(to_8bit(image))
+        img = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        img_tensor = torch.tensor(np.transpose(img, (2, 0, 1)))
+    else:
+        img_tensor = torch.tensor(np.transpose(image, (2, 0, 1)))
+    img_tensor = img_tensor.unsqueeze(0)
+    score_fr = iqa_metric(img_tensor)
+    return score_fr.item()
+
+#def calculate_brisque(image):
+#    brisque = BRISQUE()
+#    if len(image.shape) < 3:
+#        return brisque.score(cv2.cvtColor(to_8bit(image), cv2.COLOR_GRAY2RGB))
+#    return brisque.score(to_8bit(image))
 
 def get_min_brisque(images):
     min_score = float('inf')

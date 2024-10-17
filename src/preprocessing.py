@@ -8,7 +8,7 @@ from calibration import calibrate_images
 from align import align_images
 
 def force_background_to_black(image, threshold_value=0.03):
-    _, corrected_image = cv2.threshold(image, threshold_value, 255, cv2.THRESH_TOZERO)
+    _, corrected_image = cv2.threshold(image, threshold_value, 1, cv2.THRESH_TOZERO)
     return corrected_image
 
 # ------------------ Unsharp Masking ------------------
@@ -119,6 +119,8 @@ def crop_to_center(images, margin=10):
     # Crop all images using the same parameters
     for image in images:
         cropped_image = image[start_y:end_y, start_x:end_x]
+        #cropped_image = force_background_to_black(cropped_image)
+        cropped_image = np.clip(cropped_image, 0, 1)
         cropped_images.append(cropped_image)
 
         if DEBUG: progress(len(cropped_images), len(images), 'images cropped')
