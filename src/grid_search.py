@@ -1,10 +1,10 @@
 import itertools
 import config
 from image import save_image, display_image
-from align import enhance_contrast, align_images, dncnn_unsharp_mask
+from align import enhance_contrast
 from preprocessing import unsharp_mask
-from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_metrics
+from process import stack_images, align_images, dncnn_unsharp_mask
 
 def grid_search(images, save=False):
     print("Starting grid search")
@@ -21,15 +21,18 @@ def grid_search(images, save=False):
     
     aligned = align_images(images, algo=features_alg, nfeatures=n_features)
 
+    just_stacked = stack_images(denoised, stacking_alg=stacking_alg, average_alg=average_alg)
+    calculate_metrics(just_stacked, 'just_stacked', metrics)
+
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
     average_algs = ['brisque']
-    gradient_strengths = [1.0, 1.25]#, 1.5]
-    gradient_thresholds = [0.0075, 0.008]#, 0.0085]
-    denoise_strengths = [0.5, 0.65, 0.8]
-    unsharp_strengths = [1.0, 1.3, 1.5]
-    kernel_sizes = [(13, 13), (15, 15)]
-    clip_limits = [0.25, 0.5, 0.65]
+    gradient_strengths = [1.0, 1.25]
+    gradient_thresholds = [0.0075, 0.008]
+    denoise_strengths = [0.5, 0.8]
+    unsharp_strengths = [1.5]
+    kernel_sizes = [(15, 15)]
+    clip_limits = [0.65]
     metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
 
     # Iterate over all possible combinations of parameters
@@ -49,13 +52,7 @@ def grid_search(images, save=False):
                 print(f'\nRunning {features_alg} with gradient strength {gradient_strength}, gradient threshold {gradient_threshold}, denoise strength {denoise_strength} and stacking {stacking_alg} (avg = {average_alg})')
                 name = f'{features_alg}_str{gradient_strength}_thr{gradient_threshold}_dstr{denoise_strength}'
 
-                # Stack the images using the selected stacking algorithm
-                if stacking_alg == 'weighted average':
-                    image = weighted_average_stack(denoised, method=average_alg)
-                elif stacking_alg == 'median':
-                    image = median_stack(denoised)
-                elif stacking_alg == 'sigma clipping':
-                    image = sigma_clipping(denoised)
+                stacked_image = stack_images(denoised, stacking_alg=stacking_alg, average_alg=average_alg)
 
                 for strength, ker, limit in itertools.product(
                     unsharp_strengths, 
@@ -66,7 +63,7 @@ def grid_search(images, save=False):
                     print(f'Enhancing image with unsharp strength {strength}, kernel size {ker}, clip limit {limit}')
                     
                     # Apply unsharp mask and enhance contrast
-                    enhanced_image = unsharp_mask(image, strength)
+                    enhanced_image = unsharp_mask(stacked_image, strength)
                     final_image = enhance_contrast(enhanced_image, clip_limit=limit, tile_grid_size=ker)
 
                     if save:
