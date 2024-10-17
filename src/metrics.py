@@ -21,6 +21,15 @@ def calculate_metric(image, metric):
     score_fr = score_fr.item() if torch.is_tensor(score_fr) else score_fr
     return score_fr
 
+def calculate_metrics(image, name, metrics):
+    scores = {}
+    print(f'Calculating metrics for {name}')
+    for metric in metrics:
+        metric_score = calculate_metric(image, metric)
+        scores[metric] = metric_score
+        print(f'{metric} score: {metric_score:.4f}')
+    return scores
+
 def calculate_brisque(image):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     iqa_metric = pyiqa.create_metric('brisque_matlab', device = device)

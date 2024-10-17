@@ -4,14 +4,14 @@ from image import save_image, display_image, print_score
 from align import enhance_contrast
 from preprocessing import preprocess_images, unsharp_mask
 from stacking import weighted_average_stack, median_stack, sigma_clipping
-from metrics import calculate_brisque, calculate_ssim, combined_score, get_min_brisque, calculate_metric
+from metrics import get_min_brisque, calculate_metrics
 
 def grid_search(images, save=False):
     print("Starting grid search")
 
-    best_score = float('-inf')
-    best_img = ''
-    best_params = {}
+    #best_score = float('-inf')
+    #best_img = ''
+    #best_params = {}
 
     scores = {}
 
@@ -28,16 +28,6 @@ def grid_search(images, save=False):
         unsharp=False
     )
 
-    # Get the image with the minimum BRISQUE score
-    ref, brisque = get_min_brisque(aligned)
-    if save:
-        save_image(ref, "best_brisque")
-    if config.COLAB:
-        display_image(ref, name = 'best brisque')
-    else:
-        print_score(brisque, name = 'best brisque')
-
-
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
     average_algs = ['brisque']
@@ -47,7 +37,7 @@ def grid_search(images, save=False):
     unsharp_strengths = [1.0, 1.3, 1.5]
     kernel_sizes = [(13, 13), (15, 15)]
     clip_limits = [0.25, 0.5, 0.65]
-    metrics = ['niqe', 'piqe', 'liqe']#, 'nima', 'brisque_matlab']
+    metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
@@ -93,21 +83,17 @@ def grid_search(images, save=False):
                     
                     # Apply unsharp mask and enhance contrast
                     enhanced_image = unsharp_mask(image, strength)
-                    contrasted_image = enhance_contrast(enhanced_image, clip_limit=limit, tile_grid_size=ker)
+                    final_image = enhance_contrast(enhanced_image, clip_limit=limit, tile_grid_size=ker)
 
                     if save:
                         print(f'Saving {new_name}')
-                        save_image(contrasted_image, new_name, 'images/output')
+                        save_image(final_image, new_name, 'images/output')
 
-                    scores[new_name] = {}
                     # Visualize the image if running on Google Colab
                     if config.COLAB:
-                        display_image(contrasted_image, metric_score, metric, new_name)
-                    for metric in metrics:
-                        metric_score = calculate_metric(contrasted_image, metric)
-                        print(f'{metric} score: {metric_score:.4f}')
-
-                        scores[new_name][metric] = metric_score
+                        display_image(final_image, new_name)
+                    scores[new_name] = calculate_metrics(final_image, new_name, metrics)
+                    
 
     print('Grid search completed')
     # print scores

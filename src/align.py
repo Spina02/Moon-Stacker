@@ -88,7 +88,6 @@ def align_image(image, ref_image, aligner, matcher):
 
     return aligned_image
 
-
 def align_images(images, algo='orb', nfeatures=10000):
     # Select reference image
     print("selecting the reference image")

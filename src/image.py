@@ -8,6 +8,11 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+def to_grayscale(images):
+    if len(images[0].shape) == 3:
+        return [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in images]
+    return images
+
 def normalize(image):
     return cv2.normalize(image, None, 0, 1, cv2.NORM_MINMAX).astype(np.float32)
 
