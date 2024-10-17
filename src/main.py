@@ -80,24 +80,24 @@ def main():
 
     image_0 = crop_to_center([images[0]])[0]
     if config.COLAB:
+        display_image(image_0, "image 0")
         for metric in metrics:
             metric_score = calculate_metric(image_0, metric)
             print(f'{metric} score: {metric_score:.4f}')
 
             # Visualize the image if running on Google Colab
-            display_image(image_0, metric_score, metric, "image 0")
 
     images = calibrate_images(images, bias, dark, flat)
 
     calibrated_0 = crop_to_center([images[0]])[0]
 
     if config.COLAB:
+        display_image(calibrated_0, "calibrated")
         for metric in metrics:
             metric_score = calculate_metric(calibrated_0, metric)
             print(f'{metric} score: {metric_score:.4f}')
 
             # Visualize the image if running on Google Colab
-            display_image(calibrated_0, metric_score, metric, "calibrated")
 
     params, aligned = grid_search(images)
     process_images(None, params = params, aligned = aligned)

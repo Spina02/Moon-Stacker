@@ -117,21 +117,13 @@ def calibrate_single_image(image, master_bias, master_dark, master_flat):
 
 def calibrate_images(images, master_bias, master_dark, master_flat):
     print("Started image calibration")
-    num_processes = min(cpu_count(), len(images))
-    print(f"Utilizzo di {num_processes} processi per la calibrazione delle immagini.")
-
-    # Creare una funzione parziale con i master predefiniti
-    calibrate_partial = partial(calibrate_single_image, master_bias=master_bias, master_dark=master_dark, master_flat=master_flat)
-
-    # Utilizzare un Pool di processi
-    with Pool(processes=num_processes) as pool:
-        # Mappare le immagini alla funzione di calibrazione
-        calibrated_images = pool.map(calibrate_partial, images)
+    
+    calibrated_images = []
 
     # Se DEBUG è attivo, mostrare il progresso (non consigliato con multiprocessing per semplicità)
-    if DEBUG:
-        for idx, _ in enumerate(calibrated_images, 1):
+    for idx, image in enumerate(images):
+        calibrated_images.append(calibrate_single_image(image, master_bias, master_dark, master_flat))
+        if DEBUG:
             progress(idx, len(images), 'images calibrated')
 
-    print("Calibrazione delle immagini completata.")
     return calibrated_images

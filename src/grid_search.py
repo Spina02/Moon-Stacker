@@ -33,7 +33,7 @@ def grid_search(images, save=False):
     if save:
         save_image(ref, "best_brisque")
     if config.COLAB:
-        display_image(ref, brisque, name = 'best brisque')
+        display_image(ref, name = 'best brisque')
     else:
         print_score(brisque, name = 'best brisque')
 
@@ -100,13 +100,12 @@ def grid_search(images, save=False):
                         save_image(contrasted_image, new_name, 'images/output')
 
                     scores[new_name] = {}
+                    # Visualize the image if running on Google Colab
+                    if config.COLAB:
+                        display_image(contrasted_image, metric_score, metric, new_name)
                     for metric in metrics:
                         metric_score = calculate_metric(contrasted_image, metric)
                         print(f'{metric} score: {metric_score:.4f}')
-
-                        # Visualize the image if running on Google Colab
-                        if config.COLAB:
-                            display_image(contrasted_image, metric_score, metric, new_name)
 
                         scores[new_name][metric] = metric_score
 
