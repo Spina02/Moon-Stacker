@@ -14,6 +14,7 @@ def grid_search(images, save=False):
     #best_params = {}
 
     scores = {}
+    metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
 
     features_alg = 'orb'
     n_features = 10000
@@ -33,7 +34,6 @@ def grid_search(images, save=False):
     unsharp_strengths = [1.5]
     kernel_sizes = [(15, 15)]
     clip_limits = [0.65]
-    metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
