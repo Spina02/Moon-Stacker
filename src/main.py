@@ -31,8 +31,8 @@ def main():
 
     calculate_metrics(calibrated_0, "calibrated", metrics)
 
-    #grid_search(images)
-    process_images(images)
+    grid_search(images)
+    #process_images(images)
 
 if __name__ == '__main__':
     main()

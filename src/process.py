@@ -75,7 +75,7 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
 def dncnn_unsharp_mask(images, gradient_strength=1.5, gradient_threshold=0.005, denoise_strength=0.75):
     return gradient_mask_denoise_unsharp(images, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
 
-def stack_images(images, stacking_alg='weighted average', average_alg='sharpness'):
+def stack_images(images, stacking_alg='weighted average', average_alg='brisque'):
     if stacking_alg == 'weighted average':
         return weighted_average_stack(images, method=average_alg)
     elif stacking_alg == 'median':

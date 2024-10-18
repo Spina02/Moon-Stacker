@@ -21,7 +21,7 @@ def grid_search(images, save=False):
     
     aligned = align_images(images, algo=features_alg, nfeatures=n_features)
 
-    just_stacked = stack_images(aligned, stacking_alg=stacking_alg, average_alg=average_alg)
+    just_stacked = stack_images(aligned)
     calculate_metrics(just_stacked, 'just_stacked', metrics)
 
     # Grid search parameters
