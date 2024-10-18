@@ -4,7 +4,6 @@ import cv2
 import pyiqa
 import torch
 from image import to_8bit, to_16bit
-#from brisque import BRISQUE
 from skimage.metrics import structural_similarity as ssim
 
 def calculate_metric(image, metric):
@@ -42,12 +41,6 @@ def calculate_brisque(image):
     img_tensor = img_tensor.unsqueeze(0)
     score_fr = iqa_metric(img_tensor)
     return score_fr.item()
-
-#def calculate_brisque(image):
-#    brisque = BRISQUE()
-#    if len(image.shape) < 3:
-#        return brisque.score(cv2.cvtColor(to_8bit(image), cv2.COLOR_GRAY2RGB))
-#    return brisque.score(to_8bit(image))
 
 def get_min_brisque(images):
     min_score = float('inf')

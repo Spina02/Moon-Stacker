@@ -47,12 +47,12 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
         if image.ndim == 3:
             denoise_mask = np.repeat(denoise_mask[:, :, np.newaxis], 3, axis=2)
 
+        # Slightly blur the mask using GaussianBlur
+        denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
+
         # Apply the mask: in areas with low gradient, use the denoised image
         # else, retain the details of the original image
         final_image = (denoised_image * denoise_mask) + (image * (1 - denoise_mask))
-
-        # Slightly blur the mask using GaussianBlur
-        if blur: denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
 
         # Apply a slight unsharp mask in areas with high gradient
         detail_mask = 1 - denoise_mask  # Inverse mask for areas with details
