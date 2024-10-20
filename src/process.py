@@ -1,5 +1,5 @@
 from stacking import weighted_average_stack, median_stack, sigma_clipping
-from metrics import calculate_metrics, get_min_brisque
+from metrics import calculate_metrics, get_best_image
 from calibration import calibrate_single_image, calculate_masters
 from preprocessing import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp
 from align import enhance_contrast, enhance
@@ -44,7 +44,7 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
         matcher = cv2.BFMatcher.create(norm)
 
         if DEBUG: print("selecting the reference image")
-        ref_image, _ = get_min_brisque(images)
+        ref_image, _ = get_best_image(images)
         aligned_images = [ref_image]
         enhanced_ref = enhance(ref_image)
         ref_kp, ref_des = aligner.detectAndCompute(to_8bit(enhanced_ref), None)

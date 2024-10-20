@@ -119,29 +119,3 @@ def crop_to_center(images, margin=10):
         if DEBUG: progress(len(cropped_images), len(images), 'images cropped')
 
     return cropped_images
-
-# --------------- Preprocessing ----------------
-#
-#def preprocess_images(images, calibrate=False,
-#                      align=True, algo='orb', nfeatures=5000, 
-#                      crop=True, margin=10,
-#                      unsharp=True, gradient_strength=1.5, gradient_threshold=0.0075, denoise_strength=0.5,
-#                      grayscale=True):
-#    imgs = images.copy()
-#    
-#    if calibrate:
-#        imgs = calibrate_images(imgs)
-#
-#    if align:
-#        imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
-#    
-#    if crop:
-#        imgs = crop_to_center(imgs, margin=margin)
-#        
-#    if unsharp:
-#        imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
-#
-#    if grayscale and len(imgs[0].shape) == 3:
-#        imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
-#    
-#    return imgs

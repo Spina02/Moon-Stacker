@@ -1,3 +1,4 @@
+import config
 from config import *
 import numpy as np
 import cv2
@@ -6,17 +7,22 @@ import torch
 from image import to_8bit, to_16bit
 from skimage.metrics import structural_similarity as ssim
 
-def calculate_metric(image, metric):
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    iqa_metric = pyiqa.create_metric(metric, device = device)
+iqa_metrics = {}
 
+def init_metrics(metrics = config.metrics):
+    global iqa_metrics
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    for metric in metrics:
+        iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
+
+def calculate_metric(image, metric):
     if len(image.shape) < 3:
         img = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         img_tensor = torch.tensor(np.transpose(img, (2, 0, 1)))
     else:
       img_tensor = torch.tensor(np.transpose(image, (2, 0, 1)))
     img_tensor = img_tensor.unsqueeze(0)
-    score_fr = iqa_metric(img_tensor)
+    score_fr = iqa_metrics[metric](img_tensor)
     score_fr = score_fr.item() if torch.is_tensor(score_fr) else score_fr
     return score_fr
 
@@ -42,14 +48,27 @@ def calculate_brisque(image):
     score_fr = iqa_metric(img_tensor)
     return score_fr.item()
 
-def get_min_brisque(images):
-    min_score = float('inf')
-    for image in images:
-        score = calculate_brisque(image)
-        if score < min_score:
-            min_score = score
-            min_image = image
-    return min_image, min_score
+def get_best_image(images, metric = 'liqe'):
+    if metric not in iqa_metrics.keys():
+        device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
+    
+    if metric != 'liqe':
+        best_score = float('inf')
+        for image in images:
+            score = calculate_brisque(image)
+            if score < best_score:
+                best_score = score
+                best_image = image
+    else:
+        best_score = float('-inf')
+        for image in images:
+            score = calculate_brisque(image)
+            if score > best_score:
+                best_score = score
+                best_image = image
+
+    return best_image, best_score
 
 def calculate_ssim(image_ref, image):
     ref = cv2.cvtColor(image_ref, cv2.COLOR_BGR2GRAY) if len(image_ref.shape) == 3 else image_ref
@@ -82,25 +101,3 @@ def normalize(value, min_value, max_value):
     normalized = (value - min_value) / (max_value - min_value)
     normalized = np.clip(normalized, min_value, max_value)
     return normalized
-
-def evaluate_improvement(image_0, image):
-
-    ssim_value = calculate_ssim(image_0, image)
-
-    contrast_0 = calculate_contrast(image_0)
-    contrast = calculate_contrast(image)
-
-    brightness_0 = calculate_brightness(image_0)
-    brightness = calculate_brightness(image)
-
-    sharpness_0 = calculate_sharpness(image_0)
-    sharpness = calculate_sharpness(image)
-
-    improvement = {
-        'Contrast Improvement': contrast - contrast_0,
-        'Brightness Improvement': brightness - brightness_0,
-        'Sharpness Improvement': sharpness - sharpness_0,
-        'SSIM': ssim_value,
-    }
-    
-    return improvement

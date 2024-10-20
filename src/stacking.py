@@ -42,7 +42,9 @@ def calculate_weights(images, method='snr'):
     elif method == 'sharpness':
         weights = [calculate_sharpness(image) for image in images]
     elif method == 'brisque':
-        weights = [1 - normalize(calculate_brisque(image), 0, 100) for image in images]
+        weights = [1 - normalize(calculate_metric(image, 'brisque_matlab'), 0, 100) for image in images]
+    elif method == 'liqe':
+        weights = [normalize(calculate_metric(image, 'liqe'), 1, 5) for image in images]
     else:
         raise ValueError("Unknown method for calculating weights")
     return weights

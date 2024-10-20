@@ -31,12 +31,12 @@ def grid_search(images, save=False, evaluate = False):
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
     average_algs = ['brisque']
-    gradient_strengths = [1.0, 1.25]
-    gradient_thresholds = [0.0075, 0.008]
-    denoise_strengths = [0.5, 0.8]
-    unsharp_strengths = [1.5]
-    kernel_sizes = [(15, 15)]
-    clip_limits = [0.65]
+    gradient_strengths = [1.25]
+    gradient_thresholds = [0.008]
+    denoise_strengths = [0.9]
+    unsharp_strengths = [1.75]
+    kernel_sizes = [(17, 17)]
+    clip_limits = [0.7]
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
@@ -63,7 +63,7 @@ def grid_search(images, save=False, evaluate = False):
                     clip_limits
                 ):
                     new_name = f"{name}_ush{strength}_ker{ker}_clip{limit}_avg{average_alg}"
-                    print(f'Enhancing image with unsharp strength {strength}, kernel size {ker}, clip limit {limit}')
+                    if config.DEBUG: print(f'\nEnhancing image with unsharp strength {strength}, kernel size {ker}, clip limit {limit}')
                     
                     # Apply unsharp mask and enhance contrast
                     enhanced_image = unsharp_mask(stacked_image, strength)
