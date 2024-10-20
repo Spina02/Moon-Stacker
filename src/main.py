@@ -6,8 +6,6 @@ from calibration import calculate_masters, calibrate_images
 from grid_search import grid_search
 import os
 from process import process_images
-
-metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
     
 def main():
     bias = read_image('images/masters/bias.tif') if os.path.exists('images/masters/bias.tif') else None
@@ -21,7 +19,7 @@ def main():
     if config.COLAB:
         display_image(image_0, "image 0")
     
-    calculate_metrics(image_0, "image 0", metrics)
+    calculate_metrics(image_0, "image 0", config.metrics)
 
     images = calibrate_images(images, bias, dark, flat)
 
@@ -29,7 +27,7 @@ def main():
     if config.COLAB:
         display_image(calibrated_0, "calibrated")
 
-    calculate_metrics(calibrated_0, "calibrated", metrics)
+    calculate_metrics(calibrated_0, "calibrated", config.metrics)
 
     grid_search(images)
     #process_images(images)

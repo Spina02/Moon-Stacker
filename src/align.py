@@ -50,12 +50,11 @@ def enhance(image, clip_limit = 0.8, tile_grid_size = (3,3)):
 
 # -------------------- Aligning --------------------
 
-def align_image(image, ref_image, aligner, matcher):
+def align_image(image, ref_kp, ref_des, shape, aligner, matcher):
     # Initialize variables for the alignment process
     aligned_image = enhance(image)
 
     # Find keypoints and descriptors for both images
-    ref_kp, ref_des = aligner.detectAndCompute(to_8bit(ref_image), None)
     kp, des = aligner.detectAndCompute(to_8bit(aligned_image), None)
 
     if des is None or ref_des is None:
@@ -78,6 +77,6 @@ def align_image(image, ref_image, aligner, matcher):
         print(f'\nInvalid homography\n')
         
     # Warp the original image using the final homography
-    aligned_image = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
+    aligned_image = cv2.warpPerspective(image, H, shape, flags=cv2.INTER_CUBIC)
 
     return aligned_image

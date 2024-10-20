@@ -5,7 +5,7 @@ from preprocessing import unsharp_mask, crop_to_center, gradient_mask_denoise_un
 from align import enhance_contrast, enhance
 import config
 from config import DEBUG
-from image import save_image, display_image
+from image import save_image, display_image, to_8bit
 from align import align_image
 import cv2
 from utils import progress
@@ -47,11 +47,13 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
         ref_image, _ = get_min_brisque(images)
         aligned_images = [ref_image]
         enhanced_ref = enhance(ref_image)
+        ref_kp, ref_des = aligner.detectAndCompute(to_8bit(enhanced_ref), None)
+        ref_shape = (ref_image.shape[1], ref_image.shape[0])
     
         if DEBUG: print("starting alignment")
         # Align each image to the reference image using pyramid alignment
         for idx, image in enumerate(images[1:]):
-            aligned_image = align_image(image, enhanced_ref, aligner, matcher)
+            aligned_image = align_image(image, ref_kp, ref_des, ref_shape, aligner, matcher)
             if aligned_image is not None:
                 aligned_images.append(aligned_image)
             if DEBUG: progress(idx+1, len(images), 'images aligned')
