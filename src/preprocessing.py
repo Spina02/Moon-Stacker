@@ -3,9 +3,9 @@ import numpy as np
 from config import DEBUG
 from utils import progress
 from image import to_8bit
-from denoise import model_init, perform_denoising
-from calibration import calibrate_images
-from align import align_images
+from denoise import perform_denoising#, model_init
+#from calibration import calibrate_images
+#from align import align_images
 
 def force_background_to_black(image, threshold_value=0.03):
     _, corrected_image = cv2.threshold(image, threshold_value, 1, cv2.THRESH_TOZERO)
@@ -23,22 +23,19 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
 
         denoised_image = denoised_image * denoise_strength + image * (1 - denoise_strength)
 
-        # If the image has more than two dimensions, calculate the gradient for each channel
-        if image.ndim == 3:  # Color image (e.g., RGB)
-            gradient_magnitude = np.zeros_like(image)
-            for i in range(image.shape[2]):  # For each channel
-                gradient_x, gradient_y = np.gradient(image[:, :, i])
-                gradient_magnitude[:, :, i] = np.sqrt(gradient_x**2 + gradient_y**2)
-            
-            # Average the gradients across channels
-            gradient_magnitude = np.mean(gradient_magnitude, axis=2)
+        if image.ndim == 3:
+            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY).astype(np.float32)
         else:
-            # Grayscale image
-            gradient_x, gradient_y = np.gradient(image)
-            gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+            gray_image = image.astype(np.float32)
+        
+        # Calcola il gradiente
+        gradient_x, gradient_y = np.gradient(gray_image)
+        gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
 
         # Create the mask: where the gradient is below the threshold, apply denoising
         denoise_mask = np.where(gradient_magnitude < threshold, 1, 0)
+
+        denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
 
         if denoise_mask is None:
             raise ValueError("denoise mask is None")
@@ -47,15 +44,11 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
         if image.ndim == 3:
             denoise_mask = np.repeat(denoise_mask[:, :, np.newaxis], 3, axis=2)
 
-        # Slightly blur the mask using GaussianBlur
-        denoise_mask = cv2.GaussianBlur(denoise_mask.astype(np.float32), (3, 3), 0.5)
+        detail_mask = 1 - denoise_mask  # Inverse mask for areas with details
 
         # Apply the mask: in areas with low gradient, use the denoised image
         # else, retain the details of the original image
-        final_image = (denoised_image * denoise_mask) + (image * (1 - denoise_mask))
-
-        # Apply a slight unsharp mask in areas with high gradient
-        detail_mask = 1 - denoise_mask  # Inverse mask for areas with details
+        final_image = (denoised_image * denoise_mask) + (image * detail_mask)
 
         # Amplify the details in the areas selected by the mask
         amplified_details = (image - denoised_image) * strength * detail_mask
@@ -128,27 +121,27 @@ def crop_to_center(images, margin=10):
     return cropped_images
 
 # --------------- Preprocessing ----------------
-
-def preprocess_images(images, calibrate=False,
-                      align=True, algo='orb', nfeatures=5000, 
-                      crop=True, margin=10,
-                      unsharp=True, gradient_strength=1.5, gradient_threshold=0.0075, denoise_strength=0.5,
-                      grayscale=True):
-    imgs = images.copy()
-    
-    if calibrate:
-        imgs = calibrate_images(imgs)
-
-    if align:
-        imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
-    
-    if crop:
-        imgs = crop_to_center(imgs, margin=margin)
-        
-    if unsharp:
-        imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
-
-    if grayscale and len(imgs[0].shape) == 3:
-        imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
-    
-    return imgs
+#
+#def preprocess_images(images, calibrate=False,
+#                      align=True, algo='orb', nfeatures=5000, 
+#                      crop=True, margin=10,
+#                      unsharp=True, gradient_strength=1.5, gradient_threshold=0.0075, denoise_strength=0.5,
+#                      grayscale=True):
+#    imgs = images.copy()
+#    
+#    if calibrate:
+#        imgs = calibrate_images(imgs)
+#
+#    if align:
+#        imgs = align_images(imgs, algo=algo, nfeatures=nfeatures)
+#    
+#    if crop:
+#        imgs = crop_to_center(imgs, margin=margin)
+#        
+#    if unsharp:
+#        imgs = gradient_mask_denoise_unsharp(imgs, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
+#
+#    if grayscale and len(imgs[0].shape) == 3:
+#        imgs = [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in imgs]
+#    
+#    return imgs

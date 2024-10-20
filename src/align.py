@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 from image import to_8bit, to_float32
 from config import DEBUG
-from utils import progress
-from metrics import get_min_brisque
 import skimage
 
 def enhance_contrast(image, clip_limit, tile_grid_size):
@@ -55,10 +53,9 @@ def enhance(image, clip_limit = 0.8, tile_grid_size = (3,3)):
 def align_image(image, ref_image, aligner, matcher):
     # Initialize variables for the alignment process
     aligned_image = enhance(image)
-    ref_image_pre = enhance(ref_image)
 
     # Find keypoints and descriptors for both images
-    ref_kp, ref_des = aligner.detectAndCompute(to_8bit(ref_image_pre), None)
+    ref_kp, ref_des = aligner.detectAndCompute(to_8bit(ref_image), None)
     kp, des = aligner.detectAndCompute(to_8bit(aligned_image), None)
 
     if des is None or ref_des is None:
@@ -79,44 +76,8 @@ def align_image(image, ref_image, aligner, matcher):
 
     if H is None or not np.linalg.det(H):
         print(f'\nInvalid homography\n')
-
-    # Warp the aligned image at the current level
-    #aligned_image = cv2.warpPerspective(aligned_image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
-
+        
     # Warp the original image using the final homography
     aligned_image = cv2.warpPerspective(image, H, (ref_image.shape[1], ref_image.shape[0]), flags=cv2.INTER_CUBIC)
 
     return aligned_image
-
-def align_images(images, algo='orb', nfeatures=10000):
-    # Select reference image
-    print("selecting the reference image")
-    ref_image = images[0]#get_min_brisque(images)
-
-    # Choose the feature detection algorithm
-    if algo == 'orb':
-        aligner = cv2.ORB_create(nfeatures=nfeatures)
-        norm = cv2.NORM_HAMMING
-
-    elif algo == 'sift':
-        aligner = cv2.SIFT_create(nfeatures=nfeatures, sigma=1.6)
-        norm = cv2.NORM_L2
-        
-    elif algo == 'surf':
-        aligner = cv2.xfeatures2d.SURF_create(400)
-        norm = cv2.NORM_L2
-
-    # Create a matcher object
-    matcher = cv2.BFMatcher.create(norm)
-
-    aligned_images = []
-  
-    print("starting alignment")
-    # Align each image to the reference image using pyramid alignment
-    for idx, image in enumerate(images):
-        aligned_image = align_image(image, ref_image, aligner, matcher)
-        if aligned_image is not None:
-            aligned_images.append(aligned_image)
-        if DEBUG: progress(idx + 1, len(images), 'images aligned')
-
-    return aligned_images

@@ -13,6 +13,8 @@ masters_folder = './images/masters'
 output_folder = './images/output'
 output_format = 'png'
 
+metrics = ['niqe_matlab', 'brisque_matlab', 'liqe_mix']
+
 def config_init():
     global input_folder, output_folder, output_format
     # select the input folder from user input

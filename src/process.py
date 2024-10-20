@@ -2,7 +2,7 @@ from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_metrics, get_min_brisque
 from calibration import calibrate_single_image, calculate_masters
 from preprocessing import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp
-from align import enhance_contrast
+from align import enhance_contrast, enhance
 import config
 from config import DEBUG
 from image import save_image, display_image
@@ -10,19 +10,6 @@ from align import align_image
 import cv2
 from utils import progress
 from denoise import model_init
-
-metrics = ['niqe', 'piqe', 'liqe']
-
-best_params = {
-    "gradient_strength": 1.8,
-    "gradient_threshold": 0.005,
-    "denoise_strength": 0.75,
-    "stacking_alg": "weighted average",
-    "average_alg": "brisque",
-    "strength": 1.25,
-    "ker": (11, 11),
-    "limit": 0.7
-}
 
 def calibrate_images(images, master_bias=None, master_dark=None, master_flat=None):
     master_bias, master_dark, master_flat = calculate_masters(master_bias, master_dark, master_flat)
@@ -39,34 +26,37 @@ def calibrate_images(images, master_bias=None, master_dark=None, master_flat=Non
     return calibrated_images
 
 def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, margin = 10):
+    if len(images) > 1:
+        # Choose the feature detection algorithm
+        if algo == 'orb':
+            aligner = cv2.ORB_create(nfeatures=nfeatures)
+            norm = cv2.NORM_HAMMING
 
-    # Choose the feature detection algorithm
-    if algo == 'orb':
-        aligner = cv2.ORB_create(nfeatures=nfeatures)
-        norm = cv2.NORM_HAMMING
+        elif algo == 'sift':
+            aligner = cv2.SIFT_create(nfeatures=nfeatures, sigma=sigma)
+            norm = cv2.NORM_L2
+            
+        elif algo == 'surf':
+            aligner = cv2.xfeatures2d.SURF_create(h_thr)
+            norm = cv2.NORM_L2
 
-    elif algo == 'sift':
-        aligner = cv2.SIFT_create(nfeatures=nfeatures, sigma=sigma)
-        norm = cv2.NORM_L2
-        
-    elif algo == 'surf':
-        aligner = cv2.xfeatures2d.SURF_create(h_thr)
-        norm = cv2.NORM_L2
+        # Create a matcher object
+        matcher = cv2.BFMatcher.create(norm)
 
-    # Create a matcher object
-    matcher = cv2.BFMatcher.create(norm)
-
-    if DEBUG: print("selecting the reference image")
-    ref_image, _ = get_min_brisque(images)
-    aligned_images = [ref_image]
-  
-    if DEBUG: print("starting alignment")
-    # Align each image to the reference image using pyramid alignment
-    for idx, image in enumerate(images[1:]):
-        aligned_image = align_image(image, ref_image, aligner, matcher)
-        if aligned_image is not None:
-            aligned_images.append(aligned_image)
-        if DEBUG: progress(idx+1, len(images), 'images aligned')
+        if DEBUG: print("selecting the reference image")
+        ref_image, _ = get_min_brisque(images)
+        aligned_images = [ref_image]
+        enhanced_ref = enhance(ref_image)
+    
+        if DEBUG: print("starting alignment")
+        # Align each image to the reference image using pyramid alignment
+        for idx, image in enumerate(images[1:]):
+            aligned_image = align_image(image, enhanced_ref, aligner, matcher)
+            if aligned_image is not None:
+                aligned_images.append(aligned_image)
+            if DEBUG: progress(idx+1, len(images), 'images aligned')
+    else:
+        aligned_images = images.copy()
     
     aligned_images = crop_to_center(aligned_images, margin=margin)
 
@@ -85,15 +75,15 @@ def stack_images(images, stacking_alg='weighted average', average_alg='brisque')
     else:
         raise ValueError(f"Algoritmo di stacking sconosciuto: {stacking_alg}")
 
-def process_images(images, params = best_params, aligned = None, save = True):
-    gradient_strength = params.get('gradient_strength', 1.5)
-    gradient_threshold = params.get('gradient_threshold', 0.005)
+def process_images(images, params = {}, aligned = None, save = True, evaluate = True):
+    gradient_strength = params.get('gradient_strength', 1)
+    gradient_threshold = params.get('gradient_threshold', 0.0075)
     denoise_strength = params.get('denoise_strength', 0.75)
     stacking_alg = params.get('stacking_alg', 'weighted average')
     average_alg = params.get('average_alg', 'brisque')
     unsharp_strength = params.get('strength', 1.25)
-    kernel_size = params.get('ker', (11, 11))
-    clip_limit = params.get('limit', 0.75)
+    kernel_size = params.get('ker', (15, 15))
+    clip_limit = params.get('limit', 0.25)
 
     if aligned is None:
         aligned = align_images(images)
@@ -113,4 +103,6 @@ def process_images(images, params = best_params, aligned = None, save = True):
     if config.COLAB:
         display_image(final_image, name)
 
-    calculate_metrics(final_image, name, metrics)
+    if evaluate: calculate_metrics(final_image, name, config.metrics)
+
+    return final_image

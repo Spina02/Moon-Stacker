@@ -9,12 +9,7 @@ from process import stack_images, align_images, dncnn_unsharp_mask
 def grid_search(images, save=False):
     print("Starting grid search")
 
-    #best_score = float('-inf')
-    #best_img = ''
-    #best_params = {}
-
     scores = {}
-    metrics = ['niqe', 'piqe', 'liqe', 'nima', 'brisque_matlab']
 
     features_alg = 'orb'
     n_features = 10000
@@ -23,7 +18,14 @@ def grid_search(images, save=False):
     aligned = align_images(images, algo=features_alg, nfeatures=n_features)
 
     just_stacked = stack_images(aligned)
-    calculate_metrics(just_stacked, 'just_stacked', metrics)
+    if save:
+        print(f'Saving just stacked image')
+        save_image(just_stacked, "just stacked", 'images/output')
+
+    # Visualize the image if running on Google Colab
+    if config.COLAB:
+        display_image(just_stacked, "just stacked")
+    calculate_metrics(just_stacked, 'just_stacked', config.metrics)
 
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
@@ -73,13 +75,10 @@ def grid_search(images, save=False):
                     # Visualize the image if running on Google Colab
                     if config.COLAB:
                         display_image(final_image, new_name)
-                    scores[new_name] = calculate_metrics(final_image, new_name, metrics)
+                    scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
                     
 
     print('Grid search completed')
     # print scores
     for name, metrics in scores.items():
         print(f'{name}: {metrics}')
-
-    #print(f'Best score: {best_score} at {best_img}')
-    #return best_params, aligned

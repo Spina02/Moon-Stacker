@@ -64,7 +64,6 @@ def denoise_tensor(model, image_tensor):
         return model(image_tensor)
 
 def perform_denoising(model, image):
-
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     if len(image.shape) == 3:
@@ -96,20 +95,3 @@ def perform_denoising(model, image):
     torch.cuda.empty_cache()
 
     return denoised_image
-
-def dncnn_images(model, images):
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-    torch.cuda.empty_cache()
-
-    denoised_images = []
-    for image in images:
-
-        denoised_images.append(perform_denoising(model, image, device))
-
-        # Free memory
-        torch.cuda.empty_cache()
-
-        progress(len(denoised_images), len(images), 'images denoised')
-
-    return denoised_images

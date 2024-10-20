@@ -4,8 +4,6 @@ import numpy as np
 import os
 from config import DEBUG
 from utils import progress
-from multiprocessing import Pool, cpu_count
-from functools import partial
 
 # Funzione per calcolare il master bias
 def calculate_master_bias(bias):
