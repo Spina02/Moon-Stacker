@@ -77,10 +77,19 @@ def grid_search(images, save=False, evaluate = False):
                     if config.COLAB:
                         display_image(final_image, new_name)
                         
-                    if evaluate: scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
+                    if evaluate:
+                        scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
                     
 
     print('Grid search completed')
     # print scores
     for name, metrics in scores.items():
         print(f'{name}: {metrics}')
+    
+    for metric in config.metrics:
+        if metric == 'liqe':
+            best = max(scores.items(), key=lambda x: x[1][metric])
+        else:
+            best = min(scores.items(), key=lambda x: x[1][metric])
+        print(f'Best {metric} score:\n\t {best[0]}\nwith a score of \t{best[1][metric]}')
+
