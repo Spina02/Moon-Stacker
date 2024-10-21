@@ -5,7 +5,7 @@ MAX_IMG = 20
 MAX_CALIBRATION = 25
 MIN_CALIBRATION = 10
 COLAB = False
-DEBUG = True
+DEBUG = False
 DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-25/net.pth'
 GRID_SEARCH = False
 
@@ -28,7 +28,7 @@ gs_params = {
     'denoise_strengths': [0.9, 1, 1.5],
     'unsharp_strengths': [2.25, 2.5],
     'kernel_sizes': [(17, 17), (19, 19)],
-    'clip_limits': [0.6, 0.8, 1]
+    'clip_limits': [0.7]
 }
 
 def init_metrics(metrics = metrics):
