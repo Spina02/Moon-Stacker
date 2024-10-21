@@ -11,7 +11,7 @@ def grid_search(images, save=True):
 
     scores = {}
     best_params = {}
-    if len(config.metrics) == 1 and metrics[0] == 'liqe':
+    if len(config.metrics) == 1 and config.metrics[0] == 'liqe':
         best_score = float('-inf')
     else:
         best_score = float('inf')
@@ -84,7 +84,7 @@ def grid_search(images, save=True):
                         
                     scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
                     if len(config.metrics) == 1:
-                        if metrics[0] == 'liqe' and scores[new_name][config.metrics[0]] > best_score or scores[new_name][config.metrics[0]] < best_score:
+                        if config.metrics[0] == 'liqe' and scores[new_name][config.metrics[0]] > best_score or scores[new_name][config.metrics[0]] < best_score:
                             best_score = scores[new_name][config.metrics[0]]
                             best_params = {
                                 'gradient_strength': gradient_strength,
@@ -100,8 +100,8 @@ def grid_search(images, save=True):
 
     print('Grid search completed')
     # print scores
-    for name, metrics in scores.items():
-        print(f'{name}: {metrics}')
+    for name, score in scores.items():
+        print(f'{name}: {score}')
     
     for metric in config.metrics:
         if metric == 'liqe':
