@@ -1,4 +1,5 @@
 import config
+from config import config_init
 from image import read_image, read_images,display_image
 from preprocessing import crop_to_center
 from metrics import calculate_metrics, init_metrics
@@ -9,7 +10,7 @@ from process import process_images
     
 def main():
 
-    init_config()
+    config_init()
 
     bias = read_image('images/masters/bias.tif') if os.path.exists('images/masters/bias.tif') else None
     dark = read_image('images/masters/dark.tif') if os.path.exists('images/masters/dark.tif') else None
