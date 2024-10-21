@@ -12,7 +12,7 @@ def grid_search(images, save=False):
     scores = {}
 
     features_alg = 'orb'
-    n_features = 10000
+    n_features = 15000
     print(f'Aligning images with {features_alg} using {n_features} features')
     
     aligned = align_images(images, algo=features_alg, nfeatures=n_features)
@@ -30,13 +30,13 @@ def grid_search(images, save=False):
 
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
-    average_algs = ['brisque']
-    gradient_strengths = [1.2, 1.25, 1.3]
-    gradient_thresholds = [0.008, 0.0085]
-    denoise_strengths = [0.9, 0.95]
-    unsharp_strengths = [1.75, 2]
+    average_algs = ['sharpness']
+    gradient_strengths = [1, 1.3]
+    gradient_thresholds = [0.009, 0.01]
+    denoise_strengths = [0.9, 1, 1.5]
+    unsharp_strengths = [2.25, 2.5]
     kernel_sizes = [(17, 17), (19, 19)]
-    clip_limits = [0.7, 0.75]
+    clip_limits = [0.6, 0.8, 1]
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
