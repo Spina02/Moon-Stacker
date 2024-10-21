@@ -4,7 +4,7 @@ imageio
 rawpy
 torch
 scikit-image
-matplotlib
+#matplotlib
 imagecodecs
 brisque
 git+https://github.com/chaofengc/IQA-PyTorch.git

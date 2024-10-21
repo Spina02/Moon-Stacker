@@ -6,7 +6,7 @@ from preprocessing import unsharp_mask
 from metrics import calculate_metrics
 from process import stack_images, align_images, dncnn_unsharp_mask
 
-def grid_search(images, save=False, evaluate = False):
+def grid_search(images, save=False):
     print("Starting grid search")
 
     scores = {}
@@ -26,7 +26,7 @@ def grid_search(images, save=False, evaluate = False):
     if config.COLAB:
         display_image(just_stacked, "just stacked")
     
-    if evaluate: calculate_metrics(just_stacked, 'just_stacked', config.metrics)
+    calculate_metrics(just_stacked, 'just_stacked', config.metrics)
 
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
@@ -77,8 +77,7 @@ def grid_search(images, save=False, evaluate = False):
                     if config.COLAB:
                         display_image(final_image, new_name)
                         
-                    if evaluate:
-                        scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
+                    scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
                     
 
     print('Grid search completed')
