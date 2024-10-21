@@ -10,6 +10,11 @@ def grid_search(images, save=True):
     print("Starting grid search")
 
     scores = {}
+    best_params = {}
+    if len(config.metrics) == 1 and metrics[0] == 'liqe':
+        best_score = float('-inf')
+    else:
+        best_score = float('inf')
 
     features_alg = 'orb'
     n_features = 15000
@@ -78,7 +83,20 @@ def grid_search(images, save=True):
                         display_image(final_image, new_name)
                         
                     scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
-                    
+                    if len(config.metrics) == 1:
+                        if metrics[0] == 'liqe' and scores[new_name][config.metrics[0]] > best_score or scores[new_name][config.metrics[0]] < best_score:
+                            best_score = scores[new_name][config.metrics[0]]
+                            best_params = {
+                                'gradient_strength': gradient_strength,
+                                'gradient_threshold': gradient_threshold,
+                                'denoise_strength': denoise_strength,
+                                'stacking_alg': stacking_alg,
+                                'average_alg': average_alg,
+                                'unsharp_strength': strength,
+                                'kernel_size': ker,
+                                'clip_limit': limit
+                            }
+                              
 
     print('Grid search completed')
     # print scores
@@ -91,4 +109,7 @@ def grid_search(images, save=True):
         else:
             best = min(scores.items(), key=lambda x: x[1][metric])
         print(f'Best {metric} score:\n\t {best[0]}\nwith a score of \t{best[1][metric]}')
+
+    if len(config.metrics) == 1:
+        return best_params
 
