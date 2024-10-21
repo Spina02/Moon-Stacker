@@ -31,12 +31,12 @@ def grid_search(images, save=False):
     # Grid search parameters
     stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
     average_algs = ['brisque']
-    gradient_strengths = [1.25]
-    gradient_thresholds = [0.008]
-    denoise_strengths = [0.9]
-    unsharp_strengths = [1.75]
-    kernel_sizes = [(17, 17)]
-    clip_limits = [0.7]
+    gradient_strengths = [1.2, 1.25, 1.3]
+    gradient_thresholds = [0.008, 0.0085]
+    denoise_strengths = [0.9, 0.95]
+    unsharp_strengths = [1.75, 2]
+    kernel_sizes = [(17, 17), (19, 19)]
+    clip_limits = [0.7, 0.75]
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
