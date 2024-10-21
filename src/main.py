@@ -33,7 +33,8 @@ def main():
     calculate_metrics(calibrated_0, "calibrated", config.metrics)
 
     if config.GRID_SEARCH:
-        grid_search(images, save=True)
+        params = grid_search(images, save=True)
+        process_images(images, params = params, save=True)
     else:
         process_images(images, save=True)
 
