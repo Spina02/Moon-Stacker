@@ -2,7 +2,7 @@
 
 This is my thesis project, focused on stacking multiple RAW images of the moon to produce higher quality and more detailed results. The project involves both classical image processing algorithms and modern machine learning techniques to enhance the final output.
 
-## Features (WIP)
+## Features
 
 - **Image Calibration**: The program supports the use of calibration frames to correct the images before stacking:
   - **Bias Frames**: Captured with the shortest possible exposure time and with the lens cap on, these frames help to remove the readout noise from the sensor.

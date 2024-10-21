@@ -85,7 +85,7 @@ def process_images(images, params = {}, aligned = None, save = True, evaluate = 
     average_alg = params.get('average_alg', 'sharness')
     unsharp_strength = params.get('strength', 2.25)
     kernel_size = params.get('ker', (19, 19))
-    clip_limit = params.get('limit', 0.8)
+    clip_limit = params.get('limit', 0.7)
 
     print(f"Processing images with parameters: {params}")
 
