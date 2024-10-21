@@ -49,8 +49,10 @@ def config_init():
     cmd = input("Do you want to enable grid search? (y/N) ")
     if cmd.lower() == 'y':
         GRID_SEARCH = True
-        print("Allowed metrics : 'liqe', 'niqe_matlab', 'brisque_matlab'")
-        metrics = input(f"Enter the metrics to be calculated separated by a space\n(default: '{' '.join(metrics)}'): ").split() or metrics
+        cmd = input("Do you want to change the default metrics? (y/N) ")
+        if cmd.lower() == 'y':
+            print("Allowed metrics : 'liqe', 'niqe_matlab', 'brisque_matlab'")
+            metrics = input(f"Enter the metrics to be calculated separated by a space\n(default: '{' '.join(metrics)}'): ").split() or metrics
 
         # get parameters for grid search
         check = input("Do you want to change the default grid search parameters? (y/N) ")
