@@ -1,9 +1,12 @@
+#import get_ipython
+
 MAX_IMG = 20
 MAX_CALIBRATION = 25
 MIN_CALIBRATION = 10
 COLAB = False
 DEBUG = True
 DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-25/net.pth'
+GRID_SEARCH = False
 
 input_folder = './images/lights'
 bias_folder = './images/bias'
@@ -15,17 +18,45 @@ output_format = 'png'
 
 metrics = ['niqe_matlab', 'brisque_matlab', 'liqe']
 
+gs_params = {
+    'stacking_algorithms': ['weighted average'],
+    'average_algs': ['sharpness'],
+    'gradient_strengths': [1, 1.3],
+    'gradient_thresholds': [0.009, 0.01],
+    'denoise_strengths': [0.9, 1, 1.5],
+    'unsharp_strengths': [2.25, 2.5],
+    'kernel_sizes': [(17, 17), (19, 19)],
+    'clip_limits': [0.6, 0.8, 1]
+}
+
 def config_init():
-    global input_folder, output_folder, output_format
-    # select the input folder from user input
-    cmd = input(f"Enter the input folder: (default : {input_folder}) ")
-    if cmd:
-        input_folder = cmd
-    # select the output folder from user input
-    cmd = input(f"Enter the output folder (default : {output_folder}): ")
-    if cmd:
-        output_folder = cmd
-    # select the output format from user input
-    cmd = input(f"Enter the output format (default : {output_format}): ")
-    if cmd:
-        output_format = cmd
+    global COLAB, DEBUG, GRID_SEARCH, input_folder, bias_folder, dark_folder, flat_folder, masters_folder, output_folder, output_format, metrics
+    
+    cmd = input("Are you running on Google Colab? (y/N) ")
+    COLAB = True if cmd.lower() == 'y' else False
+
+    cmd = input("Do you want to enable debug mode? (y/N) ")
+    DEBUG = True if cmd.lower() == 'y' else False
+
+    cmd = input("Do you want to enable grid search? (y/N) ")
+    if cmd.lower() == 'y':
+        GRID_SEARCH = True
+        metrics = input(f"Enter the metrics to be calculated separated by a space\n(default: '{' '.join(metrics)}'): ").split() or metrics
+
+        # get parameters for grid search
+        check = input("Do you want to change the default grid search parameters? (y/N) ")
+        if check.lower() == 'y':
+            for key in gs_params:
+                gs_params[key] = input(f"Enter the values for {key} separated by a space\n(default: '{' '.join(map(str, gs_params[key]))}'): ").split() or gs_params[key]
+
+    check = input("Do you want to change the default paths? (y/N) ")
+    if check.lower() == 'y':
+        input_folder = input(f"Enter the path to the folder containing the lights images\n(default: '{input_folder}'): ") or input_folder
+        bias_folder = input(f"Enter the path to the folder containing the bias images\n(default: '{bias_folder}'): ") or bias_folder
+        dark_folder = input(f"Enter the path to the folder containing the dark images\n(default: '{dark_folder}'): ") or dark_folder
+        flat_folder = input(f"Enter the path to the folder containing the flat images\n(default: '{flat_folder}'): ") or flat_folder
+        masters_folder = input(f"Enter the path to the folder containing the master images\n(default: '{masters_folder}'): ") or masters_folder
+        output_folder = input(f"Enter the path to the folder where the output images will be saved\n(default: '{output_folder}'): ") or output_folder
+
+    output_format = input(f"Enter the output image format\n(default: '{output_format}'): ") or output_format
+

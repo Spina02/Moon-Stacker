@@ -6,7 +6,7 @@ from preprocessing import unsharp_mask
 from metrics import calculate_metrics
 from process import stack_images, align_images, dncnn_unsharp_mask
 
-def grid_search(images, save=False):
+def grid_search(images, save=True):
     print("Starting grid search")
 
     scores = {}
@@ -28,15 +28,15 @@ def grid_search(images, save=False):
     
     calculate_metrics(just_stacked, 'just_stacked', config.metrics)
 
-    # Grid search parameters
-    stacking_algorithms = ['weighted average']#, "sigma clipping", "median"]
-    average_algs = ['sharpness']
-    gradient_strengths = [1, 1.3]
-    gradient_thresholds = [0.009, 0.01]
-    denoise_strengths = [0.9, 1, 1.5]
-    unsharp_strengths = [2.25, 2.5]
-    kernel_sizes = [(17, 17), (19, 19)]
-    clip_limits = [0.6, 0.8, 1]
+    # extract parameters
+    stacking_algorithms = config.gs_params['stacking_algorithms']
+    average_algs = config.gs_params['average_algs']
+    gradient_strengths = config.gs_params['gradient_strengths']
+    gradient_thresholds = config.gs_params['gradient_thresholds']
+    denoise_strengths = config.gs_params['denoise_strengths']
+    unsharp_strengths = config.gs_params['unsharp_strengths']
+    kernel_sizes = config.gs_params['kernel_sizes']
+    clip_limits = config.gs_params['clip_limits']
 
     # Iterate over all possible combinations of parameters
     for gradient_strength, gradient_threshold, denoise_strength in itertools.product(
