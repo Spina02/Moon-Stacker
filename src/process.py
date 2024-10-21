@@ -78,14 +78,14 @@ def stack_images(images, stacking_alg='weighted average', average_alg='brisque')
         raise ValueError(f"Algoritmo di stacking sconosciuto: {stacking_alg}")
 
 def process_images(images, params = {}, aligned = None, save = True, evaluate = True):
-    gradient_strength = params.get('gradient_strength', 1)
-    gradient_threshold = params.get('gradient_threshold', 0.0075)
-    denoise_strength = params.get('denoise_strength', 0.75)
+    gradient_strength = params.get('gradient_strength', 1.3)
+    gradient_threshold = params.get('gradient_threshold', 0.009)
+    denoise_strength = params.get('denoise_strength', 1)
     stacking_alg = params.get('stacking_alg', 'weighted average')
-    average_alg = params.get('average_alg', 'brisque')
-    unsharp_strength = params.get('strength', 1.25)
-    kernel_size = params.get('ker', (15, 15))
-    clip_limit = params.get('limit', 0.25)
+    average_alg = params.get('average_alg', 'sharness')
+    unsharp_strength = params.get('strength', 2.25)
+    kernel_size = params.get('ker', (19, 19))
+    clip_limit = params.get('limit', 0.8)
 
     if aligned is None:
         aligned = align_images(images)
