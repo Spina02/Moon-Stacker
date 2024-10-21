@@ -7,13 +7,6 @@ import torch
 from image import to_8bit, to_16bit
 from skimage.metrics import structural_similarity as ssim
 
-iqa_metrics = {}
-
-def init_metrics(metrics = config.metrics):
-    global iqa_metrics
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    for metric in metrics:
-        iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
 
 def calculate_metric(image, metric):
     if len(image.shape) < 3:
@@ -23,11 +16,11 @@ def calculate_metric(image, metric):
       img_tensor = torch.tensor(np.transpose(image, (2, 0, 1)))
     img_tensor = img_tensor.unsqueeze(0)
 
-    if metric not in iqa_metrics.keys():
+    if metric not in config.iqa_metrics.keys():
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
+        config.iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
 
-    score_fr = iqa_metrics[metric](img_tensor)
+    score_fr = config.iqa_metrics[metric](img_tensor)
     score_fr = score_fr.item() if torch.is_tensor(score_fr) else score_fr
     return score_fr
 
@@ -41,9 +34,9 @@ def calculate_metrics(image, name, metrics):
     return scores
 
 def get_best_image(images, metric = 'liqe'):
-    if metric not in iqa_metrics.keys():
+    if metric not in config.iqa_metrics.keys():
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
+        config.iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
     
     if metric != 'liqe':
         best_score = float('inf')

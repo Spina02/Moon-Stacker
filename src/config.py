@@ -1,4 +1,5 @@
-#import get_ipython
+import torch
+import pyiqa
 
 MAX_IMG = 20
 MAX_CALIBRATION = 25
@@ -16,7 +17,8 @@ masters_folder = './images/masters'
 output_folder = './images/output'
 output_format = 'png'
 
-metrics = ['niqe_matlab', 'brisque_matlab', 'liqe']
+iqa_metrics = {}
+metrics = ['liqe'] # 'niqe_matlab', 'brisque_matlab'
 
 gs_params = {
     'stacking_algorithms': ['weighted average'],
@@ -28,6 +30,12 @@ gs_params = {
     'kernel_sizes': [(17, 17), (19, 19)],
     'clip_limits': [0.6, 0.8, 1]
 }
+
+def init_metrics(metrics = metrics):
+    global iqa_metrics
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    for metric in metrics:
+        iqa_metrics[metric] = pyiqa.create_metric(metric, device = device)
 
 def config_init():
     global COLAB, DEBUG, GRID_SEARCH, input_folder, bias_folder, dark_folder, flat_folder, masters_folder, output_folder, output_format, metrics
@@ -41,6 +49,7 @@ def config_init():
     cmd = input("Do you want to enable grid search? (y/N) ")
     if cmd.lower() == 'y':
         GRID_SEARCH = True
+        print("Allowed metrics : 'liqe', 'niqe_matlab', 'brisque_matlab'")
         metrics = input(f"Enter the metrics to be calculated separated by a space\n(default: '{' '.join(metrics)}'): ").split() or metrics
 
         # get parameters for grid search
@@ -60,3 +69,4 @@ def config_init():
 
     output_format = input(f"Enter the output image format\n(default: '{output_format}'): ") or output_format
 
+    init_metrics()

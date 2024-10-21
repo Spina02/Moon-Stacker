@@ -9,7 +9,7 @@ from process import process_images
     
 def main():
 
-    init_metrics(['liqe'])
+    init_config()
 
     bias = read_image('images/masters/bias.tif') if os.path.exists('images/masters/bias.tif') else None
     dark = read_image('images/masters/dark.tif') if os.path.exists('images/masters/dark.tif') else None
