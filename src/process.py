@@ -87,7 +87,7 @@ def process_images(images, params = {}, aligned = None, save = True, evaluate = 
     kernel_size = params.get('ker', (19, 19))
     clip_limit = params.get('limit', 0.7)
 
-    print(f"Processing images with parameters: {params}")
+    print(f"Processing images with parameters: gradient_strength={gradient_strength}, gradient_threshold={gradient_threshold}, denoise_strength={denoise_strength}, stacking_alg={stacking_alg}, average_alg={average_alg}, unsharp_strength={unsharp_strength}, kernel_size={kernel_size}, clip_limit={clip_limit}")
 
     if aligned is None:
         aligned = align_images(images)
