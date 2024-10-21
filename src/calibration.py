@@ -71,6 +71,8 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
                 save_image(master_bias, 'bias', config.masters_folder, out_format='tif', dtype = np.float32)
             else:
                 print("Error while calculating master bias")
+    else:
+        print('Found master bias')
 
     if master_dark is None:
         print('Calculating dark master...')
@@ -85,6 +87,8 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
                 save_image(master_dark, 'dark', config.masters_folder, out_format='tif', dtype = np.float32)
             else:
                 print("Error while calculating master dark")
+    else:
+        print('Found master dark')
 
     if master_flat is None:
         print('Calculating flat master...')
@@ -99,6 +103,8 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
                 save_image(master_flat, 'flat', config.masters_folder, out_format='tif', dtype = np.float32)
             else:
                 print("Error while calculating master flat")
+    else:
+        print('Found master flat')
 
     return master_bias, master_dark, master_flat
 
