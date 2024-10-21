@@ -50,7 +50,7 @@ def enhance(image, clip_limit = 0.8, tile_grid_size = (3,3)):
 
 # -------------------- Aligning --------------------
 
-def align_image(image, ref_kp, ref_des, shape, aligner, matcher):
+def align_image(image, ref_image, ref_kp, ref_des, shape, aligner, matcher):
     # Initialize variables for the alignment process
     aligned_image = enhance(image)
 
@@ -81,9 +81,8 @@ def align_image(image, ref_kp, ref_des, shape, aligner, matcher):
 
     return aligned_image
 
-import cv2
-import numpy as np
 
+"""
 def align_image(image, ref_image, ref_kp, ref_des, shape, aligner, matcher):
     # Enhance the input image (assuming 'enhance' is a pre-defined function)
     enhanced_image = enhance(image)
@@ -124,7 +123,7 @@ def align_image(image, ref_image, ref_kp, ref_des, shape, aligner, matcher):
     # -------- Subpixel Alignment using ECC Algorithm --------
 
     # Convert the aligned image and reference image to grayscale
-    #aligned_gray = cv2.cvtColor(aligned_image, cv2.COLOR_BGR2GRAY)
+    aligned_gray = cv2.cvtColor(aligned_image, cv2.COLOR_BGR2GRAY)
     #ref_gray = cv2.cvtColor(ref_image, cv2.COLOR_BGR2GRAY)
 
     # Convert images to float32 and normalize to range [0, 1]
@@ -144,7 +143,7 @@ def align_image(image, ref_image, ref_kp, ref_des, shape, aligner, matcher):
 
     # Run the ECC algorithm to compute the warp matrix for subpixel alignment
     try:
-        cc, warp_matrix = cv2.findTransformECC(ref_image, aligned_image, warp_matrix, warp_mode, criteria)
+        cc, warp_matrix = cv2.findTransformECC(ref_image, aligned_gray, warp_matrix, warp_mode, criteria)
     except cv2.error as e:
         print('ECC algorithm failed:', e)
         # Return the initial aligned image if ECC fails
@@ -155,3 +154,4 @@ def align_image(image, ref_image, ref_kp, ref_des, shape, aligner, matcher):
                                             flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
 
     return aligned_image_subpixel
+"""
