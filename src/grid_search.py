@@ -96,7 +96,6 @@ def grid_search(images, save=True):
                                 'kernel_size': ker,
                                 'clip_limit': limit
                             }
-                              
 
     print('Grid search completed')
     # print scores

@@ -18,3 +18,4 @@ images/masters
 # Other files
 src/align_cuda.py
 src/_align.py
+ref_1.jpg

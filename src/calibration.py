@@ -5,7 +5,7 @@ import os
 from config import DEBUG
 from utils import progress
 
-# Funzione per calcolare il master bias
+# Fuction to calculate the master bias
 def calculate_master_bias(bias):
     # Calculate mean iteratively to save memory
     master_bias = np.zeros_like(bias[0], dtype=np.float32)
@@ -19,23 +19,25 @@ def calculate_master_bias(bias):
 
     return master_bias
 
-# Funzione per calcolare il master dark
+# Function to calculate the master dark
 def calculate_master_dark(dark, master_bias=None):
     # Calculate mean iteratively to save memory
     master_dark = np.zeros_like(dark[0], dtype=np.float32)
+
+    if master_bias is None:
+        master_bias = 0
+
     for i in range(len(dark)):
-        master_dark += dark[i] / len(dark)
+        master_dark += (dark[i] - master_bias) / len(dark)
     
     if master_dark is None or not np.issubdtype(master_dark.dtype, np.number):
         print("Error: Master dark is not numeric.")
         return None
-    if master_bias is not None:
-        master_dark -= master_bias
     print("Master dark calculated successfully.")
 
     return master_dark
 
-# Funzione per calcolare il master flat
+# Function to calculate the master flat
 def calculate_master_flat(flat, master_bias=None, master_dark=None):
     # Calculate mean iteratively to save memory
     master_flat = np.zeros_like(flat[0], dtype=np.float32)
@@ -55,9 +57,20 @@ def calculate_master_flat(flat, master_bias=None, master_dark=None):
     else:
         print("Error: Normalization factor is zero.")
         return None
+
+    if master_flat is None or not np.issubdtype(master_flat.dtype, np.number):
+        print("Error: Master flat is not numeric.")
+        return None
+
     print("Master flat calculated successfully.")
 
+    return master_flat
+
+# Function to calculate the master bias, dark and flat
 def calculate_masters(master_bias = None, master_dark = None, master_flat = None, max_img=config.MAX_CALIBRATION):
+    
+    # Calculate master bias
+    # If the master is already calculated, skip the calculation
     if master_bias is None:
         print('Calculating bias master...')
         if not os.path.exists(config.bias_folder):
@@ -74,6 +87,9 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
     else:
         print('Found master bias')
 
+
+    # Calculate master dark
+    # If the master is already calculated, skip the calculation
     if master_dark is None:
         print('Calculating dark master...')
         if not os.path.exists(config.dark_folder):
@@ -90,6 +106,9 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
     else:
         print('Found master dark')
 
+
+    # Calculate master flat
+    # If the master is already calculated, skip the calculation
     if master_flat is None:
         print('Calculating flat master...')
         if not os.path.exists(config.flat_folder):
@@ -108,6 +127,7 @@ def calculate_masters(master_bias = None, master_dark = None, master_flat = None
 
     return master_bias, master_dark, master_flat
 
+# Function to calibrate a single image
 def calibrate_single_image(image, master_bias, master_dark, master_flat):
     calibrated_image = image.astype(np.float32)
     if master_bias is not None:
@@ -119,6 +139,7 @@ def calibrate_single_image(image, master_bias, master_dark, master_flat):
     calibrated_image = np.clip(calibrated_image, 0, np.finfo(np.float32).max)  # Clip to valid range
     return calibrated_image
 
+# Function to calibrate a list of images
 def calibrate_images(images, master_bias, master_dark, master_flat):
     print("Started image calibration")
     
