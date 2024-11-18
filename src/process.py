@@ -9,7 +9,7 @@ from image import save_image, display_image, to_8bit
 from align import align_image
 import cv2
 from utils import progress
-from denoise import model_init
+from denoise import DnCNN, model_init
 
 def calibrate_images(images, master_bias=None, master_dark=None, master_flat=None):
     master_bias, master_dark, master_flat = calculate_masters(master_bias, master_dark, master_flat)
@@ -65,7 +65,8 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
     return aligned_images
 
 def dncnn_unsharp_mask(images, gradient_strength=1.5, gradient_threshold=0.005, denoise_strength=0.75):
-    return gradient_mask_denoise_unsharp(images, model_init(), strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
+    model = model_init()
+    return gradient_mask_denoise_unsharp(images, model, strength=gradient_strength, threshold=gradient_threshold, denoise_strength = denoise_strength)
 
 def stack_images(images, stacking_alg='weighted average', average_alg='sharpness'):
     if stacking_alg == 'weighted average':
@@ -93,6 +94,8 @@ def process_images(images, params = {}, aligned = None, save = True, evaluate = 
         aligned = align_images(images)
     
     denoised = dncnn_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+
+    #save_image(denoised[0], 'denoised', './images/debug')
 
     stacked_image = stack_images(denoised, stacking_alg=stacking_alg, average_alg=average_alg)
 

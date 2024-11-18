@@ -1,4 +1,5 @@
 import config
+from denoise import DnCNN
 from config import config_init
 from image import read_image, read_images,display_image
 from preprocessing import crop_to_center

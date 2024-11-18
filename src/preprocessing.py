@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from config import DEBUG
 from utils import progress
-from image import to_8bit
+from image import to_8bit, save_image
 from denoise import perform_denoising#, model_init
 #from calibration import calibrate_images
 #from align import align_images

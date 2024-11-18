@@ -1,12 +1,11 @@
 import torch
 import pyiqa
 
-MAX_IMG = 20
-MAX_CALIBRATION = 25
+MAX_IMG = 50
+MAX_CALIBRATION = 50
 MIN_CALIBRATION = 10
-COLAB = False
-DEBUG = False
-DNCNN_MODEL_PATH = './dncnn/logs/DnCNN-S-25/net.pth'
+COLAB = True
+DEBUG = True
 GRID_SEARCH = False
 
 input_folder = './images/lights'
@@ -39,6 +38,7 @@ def init_metrics(metrics = metrics):
 
 def config_init():
     global COLAB, DEBUG, GRID_SEARCH, input_folder, bias_folder, dark_folder, flat_folder, masters_folder, output_folder, output_format, metrics
+
     
     cmd = input("Are you running on Google Colab? (y/N) ")
     COLAB = True if cmd.lower() == 'y' else False
@@ -70,5 +70,5 @@ def config_init():
         output_folder = input(f"Enter the path to the folder where the output images will be saved\n(default: '{output_folder}'): ") or output_folder
 
     output_format = input(f"Enter the output image format\n(default: '{output_format}'): ") or output_format
-
+    
     init_metrics()
