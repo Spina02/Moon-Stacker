@@ -6,7 +6,7 @@ from preprocessing import unsharp_mask
 from metrics import calculate_metrics
 from process import stack_images, align_images, dncnn_unsharp_mask
 
-def grid_search(images, save=True):
+def grid_search(images, aligned = None, save=True):
     print("Starting grid search")
 
     scores = {}
@@ -18,9 +18,11 @@ def grid_search(images, save=True):
 
     features_alg = 'orb'
     n_features = 15000
-    print(f'Aligning images with {features_alg} using {n_features} features')
     
-    aligned = align_images(images, algo=features_alg, nfeatures=n_features)
+    if aligned is None:
+        print(f'Aligning images with {features_alg} using {n_features} features')
+        
+        aligned = align_images(images, algo=features_alg, nfeatures=n_features)
 
     just_stacked = stack_images(aligned)
     if save:

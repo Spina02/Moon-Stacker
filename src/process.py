@@ -44,7 +44,7 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
         matcher = cv2.BFMatcher.create(norm)
 
         if DEBUG: print("selecting the reference image")
-        ref_image, _ = get_best_image(images)
+        ref_image = images[0]
         aligned_images = [ref_image]
         enhanced_ref = enhance(ref_image)
         ref_kp, ref_des = aligner.detectAndCompute(to_8bit(enhanced_ref), None)

@@ -50,6 +50,8 @@ def read_folder(folder_path, max_img):
     return [os.path.join(folder_path, folder[i]) for i in range(min(max_img, len(folder)))]
 
 def read_image(file_path):
+    if file_path.lower().endswith(('.tiff', '.tif')):
+        return imageio.imread(file_path).astype(np.float32)
     if file_path.lower().endswith(('.raf', '.dng', '.nef', '.cr2')):
         with rawpy.imread(file_path) as raw:
             # convert to rgb image using the camera white balance
