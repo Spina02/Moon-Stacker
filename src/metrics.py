@@ -68,6 +68,16 @@ def calculate_sharpness(image):
     laplacian = cv2.Laplacian(to_8bit(gray), cv2.CV_64F)
     return laplacian.var()
 
+def calculate_sharpness_sobel(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if len(image.shape) != 2 else image
+    # Calcolo del gradiente utilizzando l'operatore Sobel
+    sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)  # Gradiente lungo l'asse x
+    sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)  # Gradiente lungo l'asse y
+    magnitude = np.sqrt(sobel_x**2 + sobel_y**2)  # Calcolo della magnitudine del gradiente
+    mean_magnitude = np.mean(magnitude)  # Media della magnitudine del gradiente
+    return mean_magnitude
+
+
 def normalize(value, min_value, max_value):
     normalized = (value - min_value) / (max_value - min_value)
     normalized = np.clip(normalized, min_value, max_value)
