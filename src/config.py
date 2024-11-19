@@ -22,13 +22,14 @@ metrics = ['liqe'] # 'niqe_matlab', 'brisque_matlab'
 gs_params = {
     'stacking_algorithms': ['weighted average'],
     'average_algs': ['sharpness'],
-    'gradient_strengths': [0.9, 1.2],
-    'gradient_thresholds': [0.009, 0.011],
-    'denoise_strengths': [0.9, 1.2],
-    'unsharp_strengths': [2.25, 2.5],
-    'kernel_sizes': [(17, 17), (19, 19)],
+    'gradient_strengths': [1.0, 1.1],
+    'gradient_thresholds': [0.008, 0.009],
+    'denoise_strengths': [1, 1.2],
+    'unsharp_strengths': [2.3, 2.35],
+    'kernel_sizes': [(17, 17), (21, 21)],
     'clip_limits': [0.7, 0.8]
 }
+
 
 def init_metrics(metrics = metrics):
     global iqa_metrics

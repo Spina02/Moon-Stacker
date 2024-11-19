@@ -10,11 +10,12 @@ def grid_search(images, aligned = None, save=True):
     print("Starting grid search")
 
     scores = {}
-    best_params = {}
-    if len(config.metrics) == 1 and config.metrics[0] == 'liqe':
-        best_score = float('-inf')
-    else:
-        best_score = float('inf')
+    params = {}
+    if len(config.metrics) == 1:
+      if config.metrics[0] == 'liqe':
+          best_score = float('-inf')
+      else:
+          best_score = float('inf')
 
     features_alg = 'orb'
     n_features = 15000
@@ -54,8 +55,8 @@ def grid_search(images, aligned = None, save=True):
         # Preprocess the images
         denoised = dncnn_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
 
-        if save:
-            save_image(denoised[0], "denoised")
+        #if save:
+        #    save_image(denoised[0], "denoised")
 
         for stacking_alg in stacking_algorithms:
             for average_alg in average_algs:
@@ -76,19 +77,7 @@ def grid_search(images, aligned = None, save=True):
                     enhanced_image = unsharp_mask(stacked_image, strength)
                     final_image = enhance_contrast(enhanced_image, clip_limit=limit, tile_grid_size=ker)
 
-                    if save:
-                        print(f'Saving {new_name}')
-                        save_image(final_image, new_name, 'images/output')
-
-                    # Visualize the image if running on Google Colab
-                    if config.COLAB:
-                        display_image(final_image, new_name)
-                        
-                    scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
-                    if len(config.metrics) == 1:
-                        if config.metrics[0] == 'liqe' and scores[new_name][config.metrics[0]] > best_score or scores[new_name][config.metrics[0]] < best_score:
-                            best_score = scores[new_name][config.metrics[0]]
-                            best_params = {
+                    params[new_name] = {
                                 'gradient_strength': gradient_strength,
                                 'gradient_threshold': gradient_threshold,
                                 'denoise_strength': denoise_strength,
@@ -98,19 +87,32 @@ def grid_search(images, aligned = None, save=True):
                                 'kernel_size': ker,
                                 'clip_limit': limit
                             }
+                    scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)
+                    if len(config.metrics) == 1:
+                        if (config.metrics[0] == 'liqe' and scores[new_name][config.metrics[0]] > best_score) or (config.metrics[0] != 'liqe' and scores[new_name][config.metrics[0]] < best_score):
+                            best_score = scores[new_name][config.metrics[0]]
+                            if save:
+                                print(f'Saving {new_name}')
+                                save_image(final_image, new_name, 'images/output')
+
+                            # Visualize the image if running on Google Colab
+                            if config.COLAB:
+                                display_image(final_image, new_name)
 
     print('Grid search completed')
     # print scores
     for name, score in scores.items():
         print(f'{name}: {score}')
+
+    best = []
     
     for metric in config.metrics:
         if metric == 'liqe':
-            best = max(scores.items(), key=lambda x: x[1][metric])
+            best = list(max(scores.items(), key=lambda x: x[1][metric]))
         else:
-            best = min(scores.items(), key=lambda x: x[1][metric])
+            best = list(min(scores.items(), key=lambda x: x[1][metric]))
         print(f'Best {metric} score:\n\t {best[0]}\nwith a score of \t{best[1][metric]}')
 
     if len(config.metrics) == 1:
-        return best_params
+        return params[best[0]]
 

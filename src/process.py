@@ -80,13 +80,13 @@ def stack_images(images, stacking_alg='weighted average', average_alg='sharpness
 
 def process_images(images, params = {}, aligned = None, save = True, evaluate = True):
     gradient_strength = params.get('gradient_strength', 1.3)
-    gradient_threshold = params.get('gradient_threshold', 0.009)
-    denoise_strength = params.get('denoise_strength', 1)
+    gradient_threshold = params.get('gradient_threshold', 0.008)
+    denoise_strength = params.get('denoise_strength', 1.2)
     stacking_alg = params.get('stacking_alg', 'weighted average')
     average_alg = params.get('average_alg', 'sharpness')
-    unsharp_strength = params.get('strength', 2.25)
-    kernel_size = params.get('ker', (19, 19))
-    clip_limit = params.get('limit', 0.7)
+    unsharp_strength = params.get('unsharp_strength', 2.35)
+    kernel_size = params.get('kernel_size', (17, 17))
+    clip_limit = params.get('clip_limit', 0.8)
 
     print(f"Processing images with parameters: gradient_strength={gradient_strength}, gradient_threshold={gradient_threshold}, denoise_strength={denoise_strength}, stacking_alg={stacking_alg}, average_alg={average_alg}, unsharp_strength={unsharp_strength}, kernel_size={kernel_size}, clip_limit={clip_limit}")
 
