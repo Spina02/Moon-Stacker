@@ -78,38 +78,50 @@ def stack_images(images, stacking_alg='weighted average', average_alg='sharpness
     else:
         raise ValueError(f"Algoritmo di stacking sconosciuto: {stacking_alg}")
 
-def process_images(images, params = {}, aligned = None, save = True, evaluate = True):
+def process_images(images, params = {}, aligned = None, save = True, evaluate = True, denoising_method = 'dncnn'):
     gradient_strength = params.get('gradient_strength', 1.3)
     gradient_threshold = params.get('gradient_threshold', 0.008)
     denoise_strength = params.get('denoise_strength', 1.2)
     stacking_alg = params.get('stacking_alg', 'weighted average')
     average_alg = params.get('average_alg', 'sharpness')
     unsharp_strength = params.get('unsharp_strength', 2.35)
-    kernel_size = params.get('kernel_size', (17, 17))
+    kernel_size = params.get('kernel_size', (19, 19))
     clip_limit = params.get('clip_limit', 0.8)
 
-    print(f"Processing images with parameters: gradient_strength={gradient_strength}, gradient_threshold={gradient_threshold}, denoise_strength={denoise_strength}, stacking_alg={stacking_alg}, average_alg={average_alg}, unsharp_strength={unsharp_strength}, kernel_size={kernel_size}, clip_limit={clip_limit}")
+    print(f"Processing images with parameters: gradient_strength={gradient_strength}, gradient_threshold={gradient_threshold}, denoise_strength={denoise_strength}, stacking_alg={stacking_alg}, average_alg={average_alg}, unsharp_strength={unsharp_strength}, kernel_size={kernel_size}, clip_limit={clip_limit}, denoising_method={denoising_method}")
 
     if aligned is None:
+        if images is None:
+            raise ValueError("Devi fornire almeno 'images' o 'aligned'")
         aligned = align_images(images)
     
-    denoised = dncnn_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+    # Denoising
+    if denoising_method == 'dncnn':
+        denoised = dncnn_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength=denoise_strength)
+    elif denoising_method == 'gaussian':
+        denoised = [cv2.GaussianBlur(img, (5, 5), 5) for img in aligned]
+    elif denoising_method == 'bilateral':
+        denoised = [cv2.bilateralFilter(img, 9, 150, 150) for img in aligned]
+    elif denoising_method == 'median':
+        denoised = [cv2.medianBlur(img, 7) for img in aligned]
+    else:
+        raise ValueError(f"Unknown denoising method: {denoising_method}")
 
-    #save_image(denoised[0], 'denoised', './images/debug')
-
+    # Stacking
     stacked_image = stack_images(denoised, stacking_alg=stacking_alg, average_alg=average_alg)
 
-    # Enhancing: apply unsharp mask and contrast enhancement
+    # Enhancing: applica unsharp mask e contrast enhancement
     enhanced_image = unsharp_mask(stacked_image, unsharp_strength)
     final_image = enhance_contrast(enhanced_image, clip_limit=clip_limit, tile_grid_size=kernel_size)
 
-    name = f"orb_str{gradient_strength}_thr{gradient_threshold}_dstr{denoise_strength}_ush{unsharp_strength}_ker{kernel_size}_clip{clip_limit}_avg{average_alg}"
+    name = f"{denoising_method}_ush{unsharp_strength}_ker{kernel_size}_clip{clip_limit}_avg{average_alg}"
     
     if save:
         save_image(final_image, name, config.output_folder)
     if config.COLAB:
         display_image(final_image, name)
 
-    if evaluate: calculate_metrics(final_image, name, config.metrics)
+    if evaluate:
+        calculate_metrics(final_image, name, config.metrics)
 
     return final_image
