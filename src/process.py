@@ -103,7 +103,7 @@ def process_images(images, params = {}, aligned = None, save = True, evaluate = 
     elif denoising_method == 'bilateral':
         denoised = [cv2.bilateralFilter(img, 9, 150, 150) for img in aligned]
     elif denoising_method == 'median':
-        denoised = [cv2.medianBlur(img, 7) for img in aligned]
+        denoised = [cv2.medianBlur(img, 5) for img in aligned]
     else:
         raise ValueError(f"Unknown denoising method: {denoising_method}")
 
