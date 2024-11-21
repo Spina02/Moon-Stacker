@@ -4,7 +4,7 @@ from image import save_image, display_image
 from align import enhance_contrast
 from preprocessing import unsharp_mask
 from metrics import calculate_metrics
-from process import stack_images, align_images, dncnn_unsharp_mask
+from process import stack_images, align_images, custom_unsharp_mask
 
 def grid_search(images, aligned = None, save=True):
     print("Starting grid search")
@@ -53,7 +53,7 @@ def grid_search(images, aligned = None, save=True):
         denoise_strengths
     ):
         # Preprocess the images
-        denoised = dncnn_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
+        denoised = custom_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength = denoise_strength)
 
         #if save:
         #    save_image(denoised[0], "denoised")
