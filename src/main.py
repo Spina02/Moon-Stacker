@@ -2,7 +2,7 @@ import config
 from denoise import DnCNN
 from config import config_init
 from image import read_image, read_images,display_image, save_images
-from preprocessing import crop_to_center
+from enhancement import crop_to_center
 from metrics import calculate_metrics, init_metrics
 from calibration import calculate_masters, calibrate_images
 from grid_search import grid_search

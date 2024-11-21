@@ -121,7 +121,7 @@ def perform_denoising(model, image):
 
     # Postprocess the l channel
     denoised_l = postprocess_image(denoised_l, 100)
-    denoised_l = reduce_banding_frequency(denoised_l)
+    #denoised_l = reduce_banding_frequency(denoised_l)
     channels[0] = denoised_l
 
     # Merge the channels

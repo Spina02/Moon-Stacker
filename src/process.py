@@ -1,7 +1,7 @@
 from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_metrics
 from calibration import calibrate_single_image, calculate_masters
-from preprocessing import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold
+from enhancement import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold
 from align import enhance_contrast, enhance
 import config
 from image import save_image, display_image, to_8bit
