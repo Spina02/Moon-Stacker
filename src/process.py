@@ -2,7 +2,7 @@ from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_metrics
 from calibration import calibrate_single_image, calculate_masters
 from enhancement import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold, enhance_contrast
-from align import enhance
+from align import pre_align_enhance
 import config
 from image import save_image, display_image, to_8bit
 from align import align_image
@@ -45,7 +45,7 @@ def align_images(images, algo='orb', nfeatures=5000, margin = 10):
         if config.DEBUG: print("selecting the reference image")
         ref_image = images[0]
         aligned_images = [ref_image]
-        enhanced_ref = enhance(ref_image)
+        enhanced_ref = pre_align_enhance(ref_image)
         ref_kp, ref_des = detector.detectAndCompute(to_8bit(enhanced_ref), None)
     
         if config.DEBUG: print("starting alignment")

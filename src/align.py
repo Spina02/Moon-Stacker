@@ -37,7 +37,6 @@ def align_image(image, ref_kp, ref_des, detector, matcher):
         print(f'\nNot enough matches found: {len(matches)} matches\n')
 
     # Compute the homography
-    shape = image.shape[1], image.shape[0]
     ref_pts = np.float32([ref_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
     img_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
     H, _ = cv2.findHomography(img_pts, ref_pts, cv2.RANSAC, 10.0, maxIters=3000, confidence=0.995)
@@ -45,7 +44,9 @@ def align_image(image, ref_kp, ref_des, detector, matcher):
     if H is None or not np.linalg.det(H):
         print(f'\nInvalid homography\n')
         
+    shape = image.shape[1], image.shape[0]
+    
     # Warp the original image using the final homography
-    aligned_image = cv2.warpPerspective(image, H, shape, flags=cv2.LANCZOS4)
+    aligned_image = cv2.warpPerspective(image, H, shape, flags=cv2.INTER_LANCZOS4)
 
     return aligned_image

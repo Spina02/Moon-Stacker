@@ -6,7 +6,7 @@ MAX_CALIBRATION = 50
 MIN_CALIBRATION = 10
 COLAB = False
 DEBUG = False
-GRID_SEARCH = True
+GRID_SEARCH = False
 
 input_folder = './images/lights'
 bias_folder = './images/bias'
