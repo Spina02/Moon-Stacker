@@ -51,7 +51,7 @@ def align_images(images, algo='orb', nfeatures=5000, margin = 10):
         if config.DEBUG: print("starting alignment")
         # Align each image to the reference image using pyramid alignment
         for idx, image in enumerate(images[1:]):
-            aligned_image = align_image(image, enhanced_ref, ref_kp, ref_des, detector, matcher)
+            aligned_image = align_image(image, ref_kp, ref_des, detector, matcher)
             if aligned_image is not None:
                 aligned_images.append(aligned_image)
             if config.DEBUG: progress(idx+1, len(images), 'images aligned')
