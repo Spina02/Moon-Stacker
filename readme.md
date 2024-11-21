@@ -13,7 +13,7 @@ This is my thesis project, focused on stacking multiple RAW images of the moon t
 
 - **Denoising and unsharping**: 
   - **Classical Methods**: Basic denoising using traditional filters like Gaussian Blur.
-  - **Machine Learning**: Advanced neural networks [DnCNN](https://github.com/SaoYan/DnCNN-PyTorch), powered by PyTorch, are employed to reduce noise in the images while preserving important lunar details, ensuring clean and high-quality results.
+  - **Machine Learning**: Advanced neural networks [DnCNN](https://github.com/cszn/DnCNN), powered by PyTorch, are employed to reduce noise in the images while preserving important lunar details, ensuring clean and high-quality results.
 
 - **Stacking Algorithms**: After alignment and denoising, the images are combined using traditional stacking algorithms:
   - **Median Stacking**: Reduces noise by taking the median value of each pixel.
