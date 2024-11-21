@@ -1,8 +1,7 @@
 import itertools
 import config
 from image import save_image, display_image
-from align import enhance_contrast
-from enhancement import unsharp_mask
+from enhancement import unsharp_mask, enhance_contrast
 from metrics import calculate_metrics
 from process import stack_images, align_images, custom_unsharp_mask
 

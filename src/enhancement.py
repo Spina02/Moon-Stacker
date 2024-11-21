@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from config import DEBUG
 from utils import progress
-from image import to_8bit, save_image
+from image import to_8bit, to_float32, save_image
 from denoise import perform_denoising
 
 # ------------------ Enhancing ------------------
@@ -18,11 +18,45 @@ def shades_of_gray(image, power=6):
     return balanced_image
 
 # Apply a soft threshold to remove background
-def soft_threshold(image, threshold, alpha=30):
+def soft_threshold(image, threshold = 0.05, alpha=5):
     mask = image < threshold
     smooth_image = image.copy()
     smooth_image[mask] = image[mask] * (1 / (1 + np.exp(-alpha * (image[mask] - threshold))))
     return smooth_image
+
+def enhance_contrast(image, clip_limit, tile_grid_size):
+    shape = len(image.shape)
+    if shape < 3:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    
+    # Convert the image to LAB color space using skimage
+    #lab = skimage.color.rgb2lab(image) 
+    lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
+
+    # Ensure the L channel is in the correct format
+    l_channel = lab[:, :, 0]
+
+    # Normalize the L channel to the range [0, 255] for OpenCV processing
+    l_channel = cv2.normalize(l_channel, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+    # Apply CLAHE on the L channel
+    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+    l_channel_equalized = clahe.apply(l_channel)
+
+    # Normalize the L channel back to the range [0, 100] for LAB color space
+    l_channel_equalized = l_channel_equalized.astype(np.float32) / 255 * 100
+
+    # Replace the L channel in the LAB image
+    lab[:, :, 0] = l_channel_equalized
+
+    # Convert the image back to RGB color space using skimage
+    enhanced_image =  cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
+    
+    # 
+    if shape < 3 and len(enhanced_image.shape) == 3:
+        enhanced_image = cv2.cvtColor(to_float32(enhanced_image), cv2.COLOR_RGB2GRAY)
+
+    return enhanced_image
 
 # ------------------ Unsharp Masking ------------------
 

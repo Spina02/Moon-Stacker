@@ -1,8 +1,8 @@
 from stacking import weighted_average_stack, median_stack, sigma_clipping
 from metrics import calculate_metrics
 from calibration import calibrate_single_image, calculate_masters
-from enhancement import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold
-from align import enhance_contrast, enhance
+from enhancement import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold, enhance_contrast
+from align import enhance
 import config
 from image import save_image, display_image, to_8bit
 from align import align_image
@@ -24,19 +24,19 @@ def calibrate_images(images, master_bias=None, master_dark=None, master_flat=Non
 
     return calibrated_images
 
-def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, margin = 10):
+def align_images(images, algo='orb', nfeatures=5000, margin = 10):
     if len(images) > 1:
         # Choose the feature detection algorithm
         if algo == 'orb':
-            aligner = cv2.ORB_create(nfeatures=nfeatures)
+            detector = cv2.ORB_create(nfeatures=nfeatures)
             norm = cv2.NORM_HAMMING
 
         elif algo == 'sift':
-            aligner = cv2.SIFT_create(nfeatures=nfeatures, sigma=sigma)
+            detector = cv2.SIFT_create(nfeatures=nfeatures)
             norm = cv2.NORM_L2
             
         elif algo == 'surf':
-            aligner = cv2.xfeatures2d.SURF_create(h_thr)
+            detector = cv2.xfeatures2d.SURF_create()
             norm = cv2.NORM_L2
 
         # Create a matcher object
@@ -46,13 +46,12 @@ def align_images(images, algo='orb', nfeatures=10000, sigma = 1.6, h_thr = 400, 
         ref_image = images[0]
         aligned_images = [ref_image]
         enhanced_ref = enhance(ref_image)
-        ref_kp, ref_des = aligner.detectAndCompute(to_8bit(enhanced_ref), None)
-        ref_shape = (ref_image.shape[1], ref_image.shape[0])
+        ref_kp, ref_des = detector.detectAndCompute(to_8bit(enhanced_ref), None)
     
         if config.DEBUG: print("starting alignment")
         # Align each image to the reference image using pyramid alignment
         for idx, image in enumerate(images[1:]):
-            aligned_image = align_image(image, enhanced_ref, ref_kp, ref_des, ref_shape, aligner, matcher)
+            aligned_image = align_image(image, enhanced_ref, ref_kp, ref_des, detector, matcher)
             if aligned_image is not None:
                 aligned_images.append(aligned_image)
             if config.DEBUG: progress(idx+1, len(images), 'images aligned')
