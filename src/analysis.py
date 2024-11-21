@@ -30,7 +30,7 @@ def analyze_calibration_effect(images_path, calibrated_path):
     
     print(f"Processing {len(images_list)} uncalibrated images...")
     final_image_no_calibration = process_images(images=images_list, save=False, evaluate=False)
-    scores_no_calibration = calculate_metrics(final_image_no_calibration, 'no_calibration', config.metrics)
+    scores_no_calibration = calculate_metrics(final_image_no_calibration, 'no_calibration', config.analysis_metrics)
     print("Uncalibrated metrics:", scores_no_calibration)
     
     # Free memory
@@ -46,14 +46,14 @@ def analyze_calibration_effect(images_path, calibrated_path):
     for img in calibrated_generator:
         calibrated_list.append(img)
     final_image_with_calibration = process_images(images=calibrated_list, save=False, evaluate=False)
-    scores_with_calibration = calculate_metrics(final_image_with_calibration, 'with_calibration', config.metrics)
+    scores_with_calibration = calculate_metrics(final_image_with_calibration, 'with_calibration', config.analysis_metrics)
     # Free memory
     del calibrated_list
     del final_image_with_calibration
     gc.collect()
 
     # Compare metrics
-    metrics = list(config.metrics)
+    metrics = list(config.analysis_metrics)
     values_no_calibration = [scores_no_calibration[metric] for metric in metrics]
     values_with_calibration = [scores_with_calibration[metric] for metric in metrics]
 
@@ -82,7 +82,7 @@ def analyze_number_of_images():
     init_metrics()
     import gc
     max_images = 23  # Replace with maximum number of available images
-    metrics_values = {metric: [] for metric in config.metrics}
+    metrics_values = {metric: [] for metric in config.analysis_metrics}
     num_images_list = range(1, max_images + 1)
 
     for nimg in num_images_list:
@@ -93,10 +93,10 @@ def analyze_number_of_images():
             images_list.append(img)
         params = {}
         final_image = process_images(images=None, aligned=images_list, save=False, evaluate=False)
-        scores = calculate_metrics(final_image, f'image_{nimg}', config.metrics)
+        scores = calculate_metrics(final_image, f'image_{nimg}', config.analysis_metrics)
         
         # Collect all metrics
-        for metric in config.metrics:
+        for metric in config.analysis_metrics:
             metrics_values[metric].append(scores[metric])
             print(f"{metric.upper()} score for {nimg} images: {scores[metric]:.4f}")
         
@@ -107,13 +107,13 @@ def analyze_number_of_images():
         print(f"Memory usage after processing {nimg} images: {get_memory_usage():.2f} MB")
 
     # Save values in separate files
-    for metric in config.metrics:
+    for metric in config.analysis_metrics:
         np.save(f'./images/analysis/{metric}_values.npy', metrics_values[metric])
         print(f"Saved {metric} values.")
 
     # Create plots for all metrics
     plt.figure(figsize=(10, 6))
-    for metric in config.metrics:
+    for metric in config.analysis_metrics:
         plt.plot(num_images_list, metrics_values[metric], marker='o', label=metric.upper())
         plt.xlabel('Number of Images in Stack')
         plt.ylabel(f'{metric} Value')
@@ -152,7 +152,7 @@ def compare_stacking_algorithms(images_path):
                 print(f"Testing weighting method: {method}")
                 params = {'stacking_alg': alg, 'average_alg': method}
                 final_image = process_images(images=None, aligned=images_list, params=params, save=False, evaluate=False)
-                scores = calculate_metrics(final_image, f'{alg}_{method}', config.metrics)
+                scores = calculate_metrics(final_image, f'{alg}_{method}', config.analysis_metrics)
                 metrics_results[f'{alg}_{method}'] = scores
                 print(f"Scores for {alg}_{method}:", scores)
                 # Free memory
@@ -161,7 +161,7 @@ def compare_stacking_algorithms(images_path):
         else:
             params = {'stacking_alg': alg}
             final_image = process_images(images=None, aligned=images_list, params=params, save=False, evaluate=False)
-            scores = calculate_metrics(final_image, alg, config.metrics)
+            scores = calculate_metrics(final_image, alg, config.analysis_metrics)
             metrics_results[alg] = scores
             print(f"Scores for {alg}:", scores)
             # Free memory
@@ -173,7 +173,7 @@ def compare_stacking_algorithms(images_path):
     gc.collect()
 
     # Create plots for each metric
-    metrics_to_plot = list(config.metrics)
+    metrics_to_plot = list(config.analysis_metrics)
     for metric in metrics_to_plot:
         labels = list(metrics_results.keys())
         values = [metrics_results[label][metric] for label in labels]
@@ -270,11 +270,11 @@ def compare_denoising_methods(images_path):
         just_denoised = denoise(images_list[0], method)
         save_image(just_denoised, f"just_denoised_{method}", './images/analysis')
         
-        scores = calculate_metrics(just_denoised, method, config.metrics)
+        scores = calculate_metrics(just_denoised, method, config.analysis_metrics)
         metrics_results_single[method] = scores
 
         final_image = process_images(images=None, aligned=images_list, params=params, save=False, evaluate=False, denoising_method=method)
-        scores = calculate_metrics(final_image, method, config.metrics)
+        scores = calculate_metrics(final_image, method, config.analysis_metrics)
         metrics_results[method] = scores
         print(f"Scores for {method}:", scores)
         save_image(final_image, method, './images/analysis')
@@ -287,7 +287,7 @@ def compare_denoising_methods(images_path):
     gc.collect()
 
     # Crea i grafici per ogni metrica per denoise singolo
-    metrics_to_plot = list(config.metrics)
+    metrics_to_plot = list(config.analysis_metrics)
     for metric in metrics_to_plot:
         labels = list(metrics_results_single.keys())
         values = [metrics_results_single[label][metric] for label in labels]
@@ -305,7 +305,7 @@ def compare_denoising_methods(images_path):
     gc.collect()
 
     # Crea i grafici per ogni metrica
-    metrics_to_plot = list(config.metrics)
+    metrics_to_plot = list(config.analysis_metrics)
     for metric in metrics_to_plot:
         labels = list(metrics_results.keys())
         values = [metrics_results[label][metric] for label in labels]
