@@ -37,7 +37,7 @@ class DnCNN(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 init.orthogonal_(m.weight)
-                print('init weight')
+                if config.DEBUG: print('init weight')
                 if m.bias is not None:
                     init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):

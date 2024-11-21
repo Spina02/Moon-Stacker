@@ -234,6 +234,7 @@ def denoise(img, denoising_method):
     if denoising_method == 'dncnn':
         model = model_init()
         denoised = perform_denoising(model, img)
+        denoised = np.clip(denoised * 0.7 + img * (0.3), 0, 1)
     elif denoising_method == 'gaussian':
         denoised = cv2.GaussianBlur(img, (5, 5), 3)
     elif denoising_method == 'bilateral':
@@ -242,9 +243,7 @@ def denoise(img, denoising_method):
         denoised = cv2.medianBlur(img, 5)
     else:
         raise ValueError(f"Unknown denoising method: {denoising_method}")
-
-    save_image(denoised, f'denoised_{denoising_method}', './images/analysis')
-
+        
     return denoised
 
 

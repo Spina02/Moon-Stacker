@@ -4,7 +4,7 @@ import pyiqa
 MAX_IMG = 50
 MAX_CALIBRATION = 50
 MIN_CALIBRATION = 10
-COLAB = True
+COLAB = False
 DEBUG = False
 GRID_SEARCH = True
 
@@ -17,7 +17,8 @@ output_folder = './images/output'
 output_format = 'png'
 
 iqa_metrics = {}
-metrics = ['liqe'] # 'niqe_matlab', 'brisque_matlab'
+metrics = ['liqe']
+analysis_metrics = ['liqe', 'niqe_matlab', 'brisque_matlab']
 
 gs_params = {
     'stacking_algorithms': ['weighted average'],
@@ -26,7 +27,7 @@ gs_params = {
     'gradient_thresholds': [0.008, 0.009],
     'denoise_strengths': [1, 1.2],
     'unsharp_strengths': [2.3, 2.35],
-    'kernel_sizes': [(17, 17), (21, 21)],
+    'tile_sizes': [(17, 17), (21, 21)],
     'clip_limits': [0.7, 0.8]
 }
 

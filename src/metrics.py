@@ -26,7 +26,7 @@ def calculate_metric(image, metric):
 
 def calculate_metrics(image, name, metrics):
     scores = {}
-    print(f'Calculating metrics for {name}')
+    if config.DEBUG: print(f'Calculating metrics for {name}')
     for metric in metrics:
         metric_score = calculate_metric(image, metric)
         scores[metric] = metric_score

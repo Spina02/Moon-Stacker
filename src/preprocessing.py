@@ -3,23 +3,53 @@ import numpy as np
 from config import DEBUG
 from utils import progress
 from image import to_8bit, save_image
-from denoise import perform_denoising#, model_init
-#from calibration import calibrate_images
-#from align import align_images
+from denoise import perform_denoising
 
-def force_background_to_black(image, threshold_value=0.03):
-    _, corrected_image = cv2.threshold(image, threshold_value, 1, cv2.THRESH_TOZERO)
-    return corrected_image
+# ------------------ Enhancing ------------------
+
+# Color correction
+def shades_of_gray(image, power=6):
+    import numpy as np
+    norm_values = np.power(np.mean(np.power(image, power), axis=(0, 1)), 1/power)
+    mean_norm = np.mean(norm_values)
+    scale_factors = mean_norm / norm_values
+    balanced_image = image * scale_factors
+    balanced_image = np.clip(balanced_image, 0, 1)
+    return balanced_image
+
+# Apply a soft threshold to remove background
+def soft_threshold(image, threshold, alpha=30):
+    mask = image < threshold
+    smooth_image = image.copy()
+    smooth_image[mask] = image[mask] * (1 / (1 + np.exp(-alpha * (image[mask] - threshold))))
+    return smooth_image
 
 # ------------------ Unsharp Masking ------------------
 
-def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, denoise_strength = 0.7, blur = False):
+def denoise(img, denoising_method, model = None):
+    # Denoising
+    if denoising_method == 'dncnn':
+        denoised = perform_denoising(model, img)
+    elif denoising_method == 'gaussian':
+        denoised = cv2.GaussianBlur(img, (5, 5), 3)
+    elif denoising_method == 'bilateral':
+        denoised = cv2.bilateralFilter(img, 9, 100, 100)
+    elif denoising_method == 'median':
+        denoised = cv2.medianBlur(img, 5)
+    else:
+        raise ValueError(f"Unknown denoising method: {denoising_method}")
+
+    save_image(denoised, f'denoised_{denoising_method}', './images/analysis')
+
+    return denoised
+
+def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, denoise_strength = 0.7, blur = False, denoising_method = "dncnn"):
     sharpened_images = []
 
     for idx, image in enumerate(images):
 
         # Apply denoising with DnCNN
-        denoised_image = perform_denoising(model, image)
+        denoised_image = denoise(image, denoising_method, model)
 
         denoised_image = denoised_image * denoise_strength + image * (1 - denoise_strength)
 
@@ -112,7 +142,6 @@ def crop_to_center(images, margin=10):
     # Crop all images using the same parameters
     for image in images:
         cropped_image = image[start_y:end_y, start_x:end_x]
-        #cropped_image = force_background_to_black(cropped_image)
         cropped_image = np.clip(cropped_image, 0, 1)
         cropped_images.append(cropped_image)
 

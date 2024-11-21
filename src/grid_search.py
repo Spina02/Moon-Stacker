@@ -43,7 +43,7 @@ def grid_search(images, aligned = None, save=True):
     gradient_thresholds = config.gs_params['gradient_thresholds']
     denoise_strengths = config.gs_params['denoise_strengths']
     unsharp_strengths = config.gs_params['unsharp_strengths']
-    kernel_sizes = config.gs_params['kernel_sizes']
+    tile_sizes = config.gs_params['tile_sizes']
     clip_limits = config.gs_params['clip_limits']
 
     # Iterate over all possible combinations of parameters
@@ -67,7 +67,7 @@ def grid_search(images, aligned = None, save=True):
 
                 for strength, ker, limit in itertools.product(
                     unsharp_strengths, 
-                    kernel_sizes, 
+                    tile_sizes, 
                     clip_limits
                 ):
                     new_name = f"{name}_ush{strength}_ker{ker}_clip{limit}_avg{average_alg}"
@@ -84,7 +84,7 @@ def grid_search(images, aligned = None, save=True):
                                 'stacking_alg': stacking_alg,
                                 'average_alg': average_alg,
                                 'unsharp_strength': strength,
-                                'kernel_size': ker,
+                                'tile_size': ker,
                                 'clip_limit': limit
                             }
                     scores[new_name] = calculate_metrics(final_image, new_name, config.metrics)

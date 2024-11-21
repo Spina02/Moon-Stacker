@@ -8,6 +8,29 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+def read_images_generator(folder_path, max_images=None):
+    import os
+    from imageio import imread
+
+    images_loaded = 0
+    for filename in sorted(os.listdir(folder_path)):
+        if max_images is not None and images_loaded >= max_images:
+            break
+        image_path = os.path.join(folder_path, filename)
+        if os.path.isfile(image_path):
+            if image_path.lower().endswith(('.tiff', '.tif')):
+                yield imread(image_path).astype(np.float32)
+                images_loaded += 1
+            if image_path.lower().endswith(('.raf', '.dng', '.nef', '.cr2')):
+                with rawpy.imread(image_path) as raw:
+                    # convert to rgb image using the camera white balance
+                    yield to_float32(raw.postprocess(use_camera_wb=True, no_auto_bright=True, output_bps=16))
+                    images_loaded += 1
+            else:
+                yield to_float32(imread(image_path))
+                images_loaded += 1
+
+
 def to_grayscale(images):
     if len(images[0].shape) == 3:
         return [cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) for image in images]
@@ -68,25 +91,6 @@ def read_images(folder_path, max_img=MAX_IMG):
         if DEBUG: progress(len(images), len(image_paths), f'images read')
     
     return images
-
-def read_images_generator(folder_path, max_images=None):
-    images_loaded = 0
-    for filename in sorted(os.listdir(folder_path)):
-        if max_images is not None and images_loaded >= max_images:
-            break
-        image_path = os.path.join(folder_path, filename)
-        if os.path.isfile(image_path):
-            if image_path.lower().endswith(('.tiff', '.tif')):
-                yield imageio.imread(image_path).astype(np.float32)
-                images_loaded += 1
-            if image_path.lower().endswith(('.raf', '.dng', '.nef', '.cr2')):
-                with rawpy.imread(image_path) as raw:
-                    # convert to rgb image using the camera white balance
-                    yield to_float32(raw.postprocess(use_camera_wb=True, no_auto_bright=True, output_bps=16))
-                    images_loaded += 1
-            else:
-                yield to_float32(imageio.imread(image_path))
-                images_loaded += 1
 
 def save_image(image, name = 'image', folder_path = config.output_folder, out_format=config.output_format.lower(), dtype = None):
     create_folder(folder_path)
