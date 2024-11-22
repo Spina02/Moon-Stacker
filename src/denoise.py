@@ -121,7 +121,6 @@ def perform_denoising(model, image):
 
     # Postprocess the l channel
     denoised_l = postprocess_image(denoised_l, 100)
-    #denoised_l = reduce_banding_frequency(denoised_l)
     channels[0] = denoised_l
 
     # Merge the channels
@@ -135,26 +134,3 @@ def perform_denoising(model, image):
     torch.cuda.empty_cache()
 
     return denoised_image
-
-def reduce_banding_frequency(image):
-
-    dft = cv2.dft(np.float32(image), flags=cv2.DFT_COMPLEX_OUTPUT)
-    dft_shift = np.fft.fftshift(dft)
-
-    # Creare una maschera per filtrare le frequenze
-    rows, cols = image.shape
-    crow, ccol = rows // 2, cols // 2
-    mask = np.ones((rows, cols, 2), np.uint8)
-    r = 10  # Raggio del cerchio da mascherare
-    cv2.circle(mask, (ccol, crow), r, (0, 0, 0), -1)
-
-    # Applicare la maschera
-    fshift = dft_shift * mask
-
-    # Trasformata inversa
-    f_ishift = np.fft.ifftshift(fshift)
-    img_back = cv2.idft(f_ishift)
-    img_back = cv2.magnitude(img_back[:, :, 0], img_back[:, :, 1])
-    # Normalizza l'immagine
-    img_back = cv2.normalize(img_back, None, 0, 1, cv2.NORM_MINMAX)
-    return img_back

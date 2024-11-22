@@ -379,18 +379,18 @@ def main():
 
         images_path = './images/aligned'
 
-    #print("\n=== Starting Analysis Pipeline ===")
-    #print("1. Analyzing calibration effect...")
-    #analyze_calibration_effect(config.input_folder, './images/calibrated')
+    print("\n=== Starting Analysis Pipeline ===")
+    print("1. Analyzing calibration effect...")
+    analyze_calibration_effect(config.input_folder, './images/calibrated')
     
-    #print("\n2. Analyzing number of images...")
-    #analyze_number_of_images()
+    print("\n2. Analyzing number of images...")
+    analyze_number_of_images()
     
-    #print("\n3. Comparing stacking algorithms...")
-    #compare_stacking_algorithms(images_path)
+    print("\n3. Comparing stacking algorithms...")
+    compare_stacking_algorithms(images_path)
     
-    #print("\n4. Generating image histograms...")
-    #generate_image_histograms(images_path)
+    print("\n4. Generating image histograms...")
+    generate_image_histograms(images_path)
     
     print("\n5. Comparing denoising methods...")
     compare_denoising_methods(images_path)

@@ -4,7 +4,7 @@ from calibration import calibrate_single_image, calculate_masters
 from enhancement import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold, enhance_contrast
 from align import pre_align_enhance
 import config
-from image import save_image, display_image, to_8bit
+from image import save_image, display_image, to_8bit, to_16bit
 from align import align_image
 import cv2
 from utils import progress
@@ -90,24 +90,21 @@ def process_images(images=None, params={}, aligned=None, save=True, evaluate=Tru
 
     if aligned is None:
         aligned = align_images(images)
-
-    for image in aligned:
-        image = soft_threshold(image, 0.05)
     
     # Denoising
     denoised = custom_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength=denoise_strength, denoising_method = denoising_method)
+    
+    no_bg = [soft_threshold(image, 0.05, 50) for image in denoised]
 
     # Stacking
-    stacked_image = stack_images(denoised, stacking_alg=stacking_alg, average_alg=average_alg)
+    stacked_image = stack_images(no_bg, stacking_alg=stacking_alg, average_alg=average_alg)
 
     # Enhancing: apply traditional unsharp mask and contrast enhancement
-    enhanced_image = unsharp_mask(stacked_image, unsharp_strength)
+    unsharped = unsharp_mask(stacked_image, unsharp_strength)
     
-    final_image = enhance_contrast(enhanced_image, clip_limit=clip_limit, tile_grid_size=tile_size)
+    enhanced = enhance_contrast(unsharped, clip_limit=clip_limit, tile_grid_size=tile_size)
 
-    final_image = shades_of_gray(final_image)
-
-    final_image = soft_threshold(final_image, 0.05)
+    final_image = shades_of_gray(enhanced)
 
     name = f"{denoising_method}_ush{unsharp_strength}_ker{tile_size}_clip{clip_limit}_avg{average_alg}"
     
