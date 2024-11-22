@@ -7,4 +7,5 @@ scikit-image
 #matplotlib
 imagecodecs
 brisque
+sympy
 git+https://github.com/chaofengc/IQA-PyTorch.git

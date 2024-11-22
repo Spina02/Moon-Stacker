@@ -91,23 +91,22 @@ def process_images(images=None, params={}, aligned=None, save=True, evaluate=Tru
     if aligned is None:
         aligned = align_images(images)
 
-    for image in aligned:
-        image = soft_threshold(image, 0.05)
-    
     # Denoising
     denoised = custom_unsharp_mask(aligned, gradient_strength=gradient_strength, gradient_threshold=gradient_threshold, denoise_strength=denoise_strength, denoising_method = denoising_method)
+    
+    enhanced = []
+    for image in denoised:
+        no_bg = soft_threshold(image, 0.05, 50)
+        unsharped = unsharp_mask(no_bg, unsharp_strength)
+        enhanced.append(unsharped)
 
     # Stacking
-    stacked_image = stack_images(denoised, stacking_alg=stacking_alg, average_alg=average_alg)
+    stacked_image = stack_images(enhanced, stacking_alg=stacking_alg, average_alg=average_alg)
 
     # Enhancing: apply traditional unsharp mask and contrast enhancement
-    enhanced_image = unsharp_mask(stacked_image, unsharp_strength)
-    
-    final_image = enhance_contrast(enhanced_image, clip_limit=clip_limit, tile_grid_size=tile_size)
-
-    final_image = shades_of_gray(final_image)
-
-    final_image = soft_threshold(final_image, 0.05)
+    contrasted = enhance_contrast(stacked_image, clip_limit, tile_size)
+    #unsharped = unsharp_mask(contrasted, unsharp_strength)
+    final_image = shades_of_gray(unsharped)
 
     name = f"{denoising_method}_ush{unsharp_strength}_ker{tile_size}_clip{clip_limit}_avg{average_alg}"
     
