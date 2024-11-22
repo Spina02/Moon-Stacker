@@ -18,7 +18,7 @@ def shades_of_gray(image, power=6):
     return balanced_image
 
 # Apply a soft threshold to remove background
-def soft_threshold(image, threshold = 0.05, alpha=5):
+def soft_threshold(image, threshold = 0.07, alpha=50):
     mask = image < threshold
     smooth_image = image.copy()
     smooth_image[mask] = image[mask] * (1 / (1 + np.exp(-alpha * (image[mask] - threshold))))
@@ -95,6 +95,8 @@ def gradient_mask_denoise_unsharp(images, model, strength=1.0, threshold=0.02, d
         # Calcola il gradiente
         gradient_x, gradient_y = np.gradient(gray_image)
         gradient_magnitude = np.sqrt(gradient_x**2 + gradient_y**2)
+
+        save_image(np.clip(gradient_magnitude + 1, 0, 1), 'gradient', './images/')
 
         # Create the mask: where the gradient is below the threshold, apply denoising
         denoise_mask = np.where(gradient_magnitude < threshold, 1, 0)

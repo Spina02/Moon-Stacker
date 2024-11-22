@@ -4,7 +4,7 @@ from calibration import calibrate_single_image, calculate_masters
 from enhancement import unsharp_mask, crop_to_center, gradient_mask_denoise_unsharp, shades_of_gray, soft_threshold, enhance_contrast
 from align import pre_align_enhance
 import config
-from image import save_image, display_image, to_8bit
+from image import save_image, display_image, to_8bit, to_16bit
 from align import align_image
 import cv2
 from utils import progress

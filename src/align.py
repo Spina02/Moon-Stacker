@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from image import to_8bit
+from image import to_8bit, to_16bit
 from enhancement import enhance_contrast, soft_threshold
 
 # ---------------- Pre-processing -----------------

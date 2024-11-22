@@ -4,7 +4,7 @@ import pyiqa
 MAX_IMG = 50
 MAX_CALIBRATION = 50
 MIN_CALIBRATION = 10
-COLAB = False
+COLAB = True
 DEBUG = False
 GRID_SEARCH = False
 
