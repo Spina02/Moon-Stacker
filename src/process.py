@@ -106,7 +106,7 @@ def process_images(images=None, params={}, aligned=None, save=True, evaluate=Tru
     # Enhancing: apply traditional unsharp mask and contrast enhancement
     contrasted = enhance_contrast(stacked_image, clip_limit, tile_size)
     #unsharped = unsharp_mask(contrasted, unsharp_strength)
-    final_image = shades_of_gray(unsharped)
+    final_image = shades_of_gray(contrasted)
 
     name = f"{denoising_method}_ush{unsharp_strength}_ker{tile_size}_clip{clip_limit}_avg{average_alg}"
     
