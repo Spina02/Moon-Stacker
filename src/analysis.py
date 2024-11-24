@@ -114,6 +114,7 @@ def analyze_number_of_images():
     # Create plots for all metrics
     plt.figure(figsize=(10, 6))
     for metric in config.analysis_metrics:
+        if metric.lower() == 'liqe': plt.ylim(1, None)
         plt.plot(num_images_list, metrics_values[metric], marker='o', label=metric.upper())
         plt.xlabel('Number of Images in Stack')
         plt.ylabel(f'{metric} Value')
@@ -179,6 +180,7 @@ def compare_stacking_algorithms(images_path):
         values = [metrics_results[label][metric] for label in labels]
 
         plt.figure(figsize=(10, 6))
+        if metric.lower() == 'liqe': plt.ylim(1, 2.5)
         x = range(len(labels))
         plt.bar(x, values, align='center')
         plt.xticks(x, labels, rotation=45)
@@ -234,13 +236,13 @@ def denoise(img, denoising_method):
     if denoising_method == 'dncnn':
         model = model_init()
         denoised = perform_denoising(model, img)
-        denoised = np.clip(denoised * 0.7 + img * (0.3), 0, 1)
+        denoised = np.clip(denoised * 0.6 + img * (0.4), 0, 1)
     elif denoising_method == 'gaussian':
-        denoised = cv2.GaussianBlur(img, (5, 5), 3)
+        denoised = cv2.GaussianBlur(img, (7, 7), 5)
     elif denoising_method == 'bilateral':
-        denoised = cv2.bilateralFilter(img, 9, 120, 120)
+        denoised = cv2.bilateralFilter(img, 9, 75, 75)
     elif denoising_method == 'median':
-        denoised = cv2.medianBlur(img, 5)
+        denoised = cv2.medianBlur(img, 3)
     else:
         raise ValueError(f"Unknown denoising method: {denoising_method}")
         
@@ -293,6 +295,7 @@ def compare_denoising_methods(images_path):
         values = [metrics_results_single[label][metric] for label in labels]
 
         plt.figure(figsize=(8, 6))
+        if metric.lower() == 'liqe': plt.ylim(1, None)
         x = range(len(labels))
         plt.bar(x, values, align='center')
         plt.xticks(x, labels)
@@ -311,6 +314,7 @@ def compare_denoising_methods(images_path):
         values = [metrics_results[label][metric] for label in labels]
 
         plt.figure(figsize=(8, 6))
+        if metric.lower() == 'liqe': plt.ylim(1, 2.5)
         x = range(len(labels))
         plt.bar(x, values, align='center')
         plt.xticks(x, labels)
@@ -381,16 +385,16 @@ def main():
 
     print("\n=== Starting Analysis Pipeline ===")
     print("1. Analyzing calibration effect...")
-    analyze_calibration_effect(config.input_folder, './images/calibrated')
+    #analyze_calibration_effect(config.input_folder, './images/calibrated')
     
     print("\n2. Analyzing number of images...")
-    analyze_number_of_images()
+    #analyze_number_of_images()
     
     print("\n3. Comparing stacking algorithms...")
-    compare_stacking_algorithms(images_path)
+    #compare_stacking_algorithms(images_path)
     
     print("\n4. Generating image histograms...")
-    generate_image_histograms(images_path)
+    #generate_image_histograms(images_path)
     
     print("\n5. Comparing denoising methods...")
     compare_denoising_methods(images_path)

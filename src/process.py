@@ -78,11 +78,11 @@ def stack_images(images, stacking_alg='weighted average', average_alg='sharpness
 
 def process_images(images=None, params={}, aligned=None, save=True, evaluate=True, denoising_method='dncnn'):
     gradient_strength = params.get('gradient_strength', 1.3)
-    gradient_threshold = params.get('gradient_threshold', 0.008)
-    denoise_strength = params.get('denoise_strength', 1.2)
+    gradient_threshold = params.get('gradient_threshold', 0.0085)
+    denoise_strength = params.get('denoise_strength', 0.9)
     stacking_alg = params.get('stacking_alg', 'weighted average')
     average_alg = params.get('average_alg', 'sharpness')
-    unsharp_strength = params.get('unsharp_strength', 2.35)
+    unsharp_strength = params.get('unsharp_strength', 1.8)
     tile_size = params.get('tile_size', (19, 19))
     clip_limit = params.get('clip_limit', 0.8)
 
@@ -97,19 +97,17 @@ def process_images(images=None, params={}, aligned=None, save=True, evaluate=Tru
     enhanced = []
     for image in denoised:
         no_bg = soft_threshold(image, 0.05, 50)
-        unsharped = unsharp_mask(no_bg, unsharp_strength)
-        enhanced.append(unsharped)
+        enhanced.append(no_bg)
 
     # Stacking
     stacked_image = stack_images(enhanced, stacking_alg=stacking_alg, average_alg=average_alg)
 
     # Enhancing: apply traditional unsharp mask and contrast enhancement
     contrasted = enhance_contrast(stacked_image, clip_limit, tile_size)
-    #unsharped = unsharp_mask(contrasted, unsharp_strength)
-    final_image = shades_of_gray(contrasted)
+    unsharped = unsharp_mask(contrasted, unsharp_strength)
+    final_image = shades_of_gray(unsharped)
 
-    name = f"{denoising_method}_ush{unsharp_strength}_ker{tile_size}_clip{clip_limit}_avg{average_alg}"
-    
+    name = f"{denoising_method}_ush{unsharp_strength}_ker{tile_size}_clip{clip_limit}_avg{average_alg}_gradstr{gradient_strength}_gradthr{gradient_threshold}_dnsstr{denoise_strength}_stack{stacking_alg}"
     if save:
         save_image(final_image, name, config.output_folder)
     if config.COLAB:

@@ -65,11 +65,11 @@ def denoise(img, denoising_method, model = None):
     if denoising_method == 'dncnn':
         denoised = perform_denoising(model, img)
     elif denoising_method == 'gaussian':
-        denoised = cv2.GaussianBlur(img, (5, 5), 3)
+        denoised = cv2.GaussianBlur(img, (3, 3), 1)
     elif denoising_method == 'bilateral':
-        denoised = cv2.bilateralFilter(img, 9, 100, 100)
+        denoised = cv2.bilateralFilter(img, 9, 150, 150)
     elif denoising_method == 'median':
-        denoised = cv2.medianBlur(img, 5)
+        denoised = cv2.medianBlur(img, 3)
     else:
         raise ValueError(f"Unknown denoising method: {denoising_method}")
 
