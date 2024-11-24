@@ -67,7 +67,7 @@ def denoise(img, denoising_method, model = None):
     elif denoising_method == 'gaussian':
         denoised = cv2.GaussianBlur(img, (3, 3), 1)
     elif denoising_method == 'bilateral':
-        denoised = cv2.bilateralFilter(img, 9, 150, 150)
+        denoised = cv2.bilateralFilter(img, 5, 50, 50)
     elif denoising_method == 'median':
         denoised = cv2.medianBlur(img, 3)
     else:
