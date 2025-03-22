@@ -2,6 +2,8 @@
 
 This is my thesis project, focused on stacking multiple RAW images of the moon to produce higher quality and more detailed results. The project involves both classical image processing algorithms and modern machine learning techniques to enhance the final output.
 
+[Here](https://raw.githubusercontent.com/Spina02/Thesis/main/src/Thesis.pdf) you can find the pdf version of my thesis.
+
 ## Features
 
 - **Image Calibration**: The program supports the use of calibration frames to correct the images before stacking:
